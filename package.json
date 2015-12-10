@@ -7,18 +7,10 @@
   "private": true,
   "license": "commercial",
   "contributors": [
-    {
-      "name": "Sardor Muminov"
-    },
-    {
-      "name": "Hikmat Abdullayev"
-    },
-    {
-      "name": "Ulugbek Muslimov"
-    },
-    {
-      "name": "Miradham Kamilov"
-    }
+    { "name": "Sardor Muminov" },
+    { "name": "Hikmat Abdullayev" },
+    { "name": "Ulugbek Muslimov" },
+    { "name": "Miradham Kamilov" }
   ],
   "scripts": {
     "start": "node server.js"
@@ -27,5 +19,24 @@
     "express": "3.4.8",
     "socket.io": "^1.3.7",
     "winston": "^2.1.1"
+  },
+  "keywords": [
+    "voditeli_tashkenta",
+    "voditeli-tashkenta",
+    "vt",
+    "vt-chat",
+    "vt-chat-server"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/driversuz/vt-chat-server.git"
+  },
+  "bugs": {
+    "url": "https://bitbucket.org/driversuz/vt-chat-server/issues/",
+    "email": "bugs@drivers.uz"
+  },
+  "homepage": "http://www.drivers.uz",
+  "engines": {
+    "node": ">=5.1.2"
   }
 }
