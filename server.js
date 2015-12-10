@@ -2,9 +2,16 @@
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-var port = process.env.PORT || 3000;
 var winston = require('winston');
+var io = require('socket.io')(server, {
+    logger: {
+      debug: winston.debug,
+      info: winston.info,
+      error: winston.error,
+      warn: winston.warn
+    }
+});
+var port = process.env.PORT || 3000;
 
 winston.level = 'debug';
 
