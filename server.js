@@ -20,7 +20,8 @@ server.listen(port, function () {
 });
 
 // Routing
-app.use(express.static(__dirname + '/public'));
+// Static site is disabled for now
+// app.use(express.static(__dirname + '/public'));
 
 // Chatroom
 
