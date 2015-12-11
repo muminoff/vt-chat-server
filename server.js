@@ -52,6 +52,12 @@ io.on('connection', function (socket) {
       });
     });
   });
+
+  // verification api
+  socket.on('verification_request', function (data) {
+    winston.log('debug', data);
+    socket.emit('verification_response', {'status': 'ok', 'detail': 'maladis fsyo perabilno :D'});
+  });
 });
 
 
