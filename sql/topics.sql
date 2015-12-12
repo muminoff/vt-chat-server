@@ -7,3 +7,6 @@ create table "topics" (
   "created_by" character varying(16) not null references users(username),
   "created_at" timestamp without time zone default (now() at time zone 'utc')
 );
+
+/* topics table index */
+create index active_topics on topics (id) where is_archived is not true;
