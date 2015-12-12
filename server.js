@@ -31,7 +31,8 @@ io.on('connection', function (socket) {
 
   // signup api
   socket.on('signup_request', function (data) {
-    winston.log('debug', data.username, data.phone_number);
+    // winston.log('debug', data.username, data.phone_number);
+    winston.log('debug', data);
     var username = data.username;
     var phone_number = data.phone_number;
     pg.connect(pgConnString, function(err, client, done) {
@@ -50,6 +51,12 @@ io.on('connection', function (socket) {
         socket.emit('signup_response', result.rows[0]);
       });
     });
+  });
+
+  // verification api
+  socket.on('verification_request', function (data) {
+    winston.log('debug', data);
+    socket.emit('verification_response', {'status': 'ok', 'detail': 'maladis fsyo perabilno :D'});
   });
 });
 
