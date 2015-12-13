@@ -12,7 +12,7 @@ var io = require('socket.io')(server, {
     }
 });
 var port = process.env.PORT || 3000;
-var pg = require('pg').native;
+var pg = require('pg');
 
 winston.level = 'debug';
 
