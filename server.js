@@ -22,7 +22,7 @@ io.on('connection', function (socket) {
   var doSignupQuery = 'insert into users(username, phone_number) values($1, $2)';
   var getAuthToken = 'select token from tokens where username=$1';
   var checkAuthToken = 'select username from tokens where token=$1';
-  // var getRoomListQuery = 'select id::int, subject, description, created_by, extract(epoch from created_at)::int as created_at from rooms';
+  var getRoomListQuery = 'select id::int, subject, description, owner, extract(epoch from created_at)::int as created_at from rooms';
 
   // signup api
   socket.on('signup_request', function (data) {
@@ -67,8 +67,35 @@ io.on('connection', function (socket) {
       client.query(checkAuthToken, [token], function(err, result) {
 
         if(result){
-          console.log("------------------>", result.rows[0]);
+          console.log(result.rows[0]);
           socket.emit('login_response', {'status': 'ok'});
+        }
+
+        if(err) {
+          return console.error('error running query', err);
+        }
+
+        done();
+
+      });
+    });
+
+  });
+
+  // roomlist api
+  socket.on('roomlist_request', function (data) {
+    winston.log('debug', data);
+
+    pg.connect(pgConnString, function(err, client, done) {
+      if(err) {
+        return console.error('error fetching client from pool', err);
+      }
+
+      client.query(getRoomListQuery, function(err, result) {
+
+        if(result){
+          console.log(result.rows);
+          socket.emit('roomlist_response', result.rows);
         }
 
         if(err) {
