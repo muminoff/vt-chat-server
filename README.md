@@ -1,9 +1,15 @@
+# VT Chat Server
 
-# Voditeli Tashkenta Chat Server
+## How to install
 
-Community chat
+For running project on your machine, be sure to install Node.js >= 5.2.0 version
 
+```
+$ npm install
+```
 
-Usage: "node ." in root directory of project.
+## How to run
 
-Required: Npm
+```
+$ npm start
+```
