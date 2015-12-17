@@ -4,11 +4,11 @@ create table "topics" (
   "title" character varying(32) not null,
   "body" text,
   "parent_room" bigint not null references rooms(id),
-  "owner" character varying(16) not null references users(username),
-  "is_archived" bool default false,
-  "created_at" timestamp without time zone default (now() at time zone 'utc'),
-  "data" hstore
+  "archived" bool default false,
+  "owner" bigint not null references users(id),
+  "attrs" jsonb,
+  "created_at" timestamp without time zone default (now() at time zone 'utc')
 );
 
 /* topics table index */
-create index active_topics on topics (id) where is_archived is not true;
+create index active_topics on topics (id) where archived is not true;
