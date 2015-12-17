@@ -12,12 +12,12 @@ psql -d vt -c 'create extension "uuid-ossp"'
 psql -d vt -c "create extension pgcrypto"
 
 # Tables
-psql -d vt -U vt <sql/users.sql
-psql -d vt -U vt <sql/tokens.sql
-psql -d vt -U vt <sql/rooms.sql
-psql -d vt -U vt <sql/topics.sql
-psql -d vt -U vt <sql/subscribers.sql
-psql -d vt -U vt <sql/messages.sql
+psql -d vt -U vt <db_schema/users.sql
+psql -d vt -U vt <db_schema/tokens.sql
+psql -d vt -U vt <db_schema/rooms.sql
+psql -d vt -U vt <db_schema/topics.sql
+psql -d vt -U vt <db_schema/subscribers.sql
+psql -d vt -U vt <db_schema/messages.sql
 
 # Dummy users
 psql -d vt -U vt -c "insert into users (username, phone_number) values('testuser1', '9989010000000')"
