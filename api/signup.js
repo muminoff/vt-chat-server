@@ -8,16 +8,14 @@ var signupUser = module.exports = function(client, username, phone_number, logge
   if(!username) {
     var msg = 'Username not given';
     logger.error(msg);
-    callback({ 'status': 'fail', 'detail': msg });
+    return callback({ 'status': 'fail', 'detail': msg }, true);
   }
-
-  logger.debug(insertUserQuery);
 
   // phone_number not given
   if(!phone_number) {
     var msg = 'Phone number not given';
     logger.error(msg);
-    callback({ 'status': 'fail', 'detail': msg });
+    return callback({ 'status': 'fail', 'detail': msg }, true);
   }
 
   // insert username and phone_number
@@ -32,7 +30,7 @@ var signupUser = module.exports = function(client, username, phone_number, logge
     logger.error(err);
   });
   getToken.on('row', function(row) {
-    callback(JSON.stringify(row));
+    return callback(row, false);
   });
 
 }
