@@ -17,7 +17,7 @@ var port = process.env.PORT || config.port;
 var pg = require('pg');
 
 io.on('connection', function (socket) {
-  logger.debug("Client connected", type(socket));
+  logger.debug("Client connected", socket.handshake.address);
 });
 
 
