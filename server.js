@@ -2,24 +2,29 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
-var yaml = require('js-yaml');
-var fs = require('fs');
 var logger = require('./logger');
-
-try {
-  var config = yaml.safeLoad(fs.readFileSync('conf/config.yml', 'utf8'));
-  logger.info("Config opened.");
-} catch (e) {
-  console.error(e);
-}
-
+var config = require('./utils/config');
+var signupUser = require('./api/signup');
 var port = process.env.PORT || config.port;
-var pg = require('pg');
 
 io.on('connection', function (socket) {
-  logger.debug("Client connected", socket.handshake.address);
-});
 
+  logger.debug("Client connected", socket.handshake.address);
+  logger.debug("Socket ID:", socket.id);
+
+  socket.on('signup_request', function(data){
+    var username = data.username;
+    var phone_number = data.phone_number;
+    var apiResponse = signupUser(username, phone_number, logger);
+    socket.emit('signup_response', JSON.stringify(apiResponse));
+  });
+
+
+  socket.on('disconnect', function(){
+    logger.debug("Client disconnected", socket.id);
+  });
+
+});
 
 server.listen(port, function () {
   logger.info('Server listening at port %d', port);

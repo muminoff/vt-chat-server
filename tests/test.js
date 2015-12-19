@@ -1,4 +1,4 @@
-var db = require('./db');
+var db = require('../db');
 
 var showResult = function(err, result) {
   console.log(result);
