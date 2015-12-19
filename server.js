@@ -46,7 +46,7 @@ io.on('connection', function (socket) {
           if(err) {
             return console.error('error running query', err);
           }
-          socket.emit('signup_response', result.rows[0]);
+          socket.emit('signup_response', JSON.stringifiy(result.rows[0]));
 
           done();
         });
@@ -69,7 +69,7 @@ io.on('connection', function (socket) {
 
         if(result){
           console.log(result.rows[0]);
-          socket.emit('login_response', {'status': 'ok'});
+          socket.emit('login_response', JSON.stringify({'status': 'ok'}));
         }
 
         if(err) {
@@ -124,7 +124,7 @@ io.on('connection', function (socket) {
 
         if(result){
           console.log(result.rows);
-          socket.emit('topiclist_response', result.rows);
+          socket.emit('topiclist_response', JSON.stringify(result.rows));
         }
 
         if(err) {

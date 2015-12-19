@@ -2,6 +2,7 @@
 # Logs
 *.log
 npm-debug.log*
+nohup.out
 
 # Runtime data
 pids
