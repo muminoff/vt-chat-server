@@ -8,7 +8,7 @@
     host: "localhost"
     port: 5432
     user: "vt"
-    password: "vt"
+    pass: "vt"
     name: "vt"
   redis: 
     host: "localhost"

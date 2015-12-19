@@ -1,5 +1,3 @@
-var pg = require('pg');
-var pgConnUrl = 'postgres://vt:vt@localhost/vt';
 
 module.exports = {
   query: function(text, values, callback) {

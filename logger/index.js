@@ -3,7 +3,6 @@ var winston = require('winston');
 var logger = module.exports = new (winston.Logger)({
   transports: [
     new (winston.transports.File)({
-      level: 'silly',
       filename: './logs/vt.log',
       json: false,
       timestamp: function() {
@@ -15,7 +14,6 @@ var logger = module.exports = new (winston.Logger)({
       }
     }),
     new (winston.transports.Console)({
-      level: 'silly',
       colorize: 'all'
     }),
   ]

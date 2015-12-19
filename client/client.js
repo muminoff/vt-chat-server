@@ -3,8 +3,8 @@ var socket = require('socket.io-client')('http://localhost:3000');
 socket.on('connect', function(){
   var myToken = 'e92a1e6551f34e1c9a62736d77a5eafc';
   console.log('Connected to socket.io server');
-  // socket.emit('signup_request', {'username': 'foob1ar2', 'phone_number': '9981234'});
-  socket.emit('signup_request', {'username': '9981234'});
+  socket.emit('signup_request', {'username': 'bahrom22', 'phone_number': '9981252'});
+  // socket.emit('signup_request', {'phone_number': '9981235'});
   // socket.emit('login_request', {'token': myToken });
   // socket.emit('roomlist_request', {'token': myToken });
   // socket.emit('topiclist_request', {'room_id': 1});
