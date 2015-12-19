@@ -1,33 +1,33 @@
-// Setup basic express server
-var express = require('express'); // http framework
-var app = express(); //app
-var server = require('http').createServer(app); // main server
-var winston = require('winston'); // log handler
-var io = require('socket.io')(server, {
-    logger: {
-      debug: winston.debug,
-      info: winston.info,
-      error: winston.error,
-      warn: winston.warn
-    }
-});
-var port = process.env.PORT || 3000;
-var pg = require('pg');
+var express = require('express');
+var app = express();
+var server = require('http').createServer(app);
+var console = require('console');
+var io = require('socket.io')(server);
+var yaml = require('js-yaml');
+var fs = require('fs');
 
-winston.level = 'debug';
+try {
+  var config = yaml.safeLoad(fs.readFileSync('conf/config.yml', 'utf8'));
+  console.log("Config opened.");
+} catch (e) {
+  console.log(e);
+}
+
+var port = process.env.PORT || config.port;
+var pg = require('pg');
 
 io.on('connection', function (socket) {
   var addedUser = false;
-  var pgConnString = "postgres://vt@localhost/vt";
+  var pgConnString = "postgres://vt:vt@localhost:5432/vt";
   var doSignupQuery = 'insert into users(username, phone_number) values($1, $2)';
   var getAuthToken = 'select token from tokens where username=$1';
   var checkAuthToken = 'select username from tokens where token=$1';
   var getRoomListQuery = 'select id::int, subject, description, owner, extract(epoch from created_at)::int as created_at from rooms';
-  var getTopicListQuery = 'select id::int, title, body, parent_room::int, owner, is_archived, extract(epoch from created_at)::int as created_at, data from topics where parent_room=$1';
+  var getTopicListQuery = 'select id::int, title, body, parent_room::int, owner, archived, extract(epoch from created_at)::int as created_at, attrs from topics where parent_room=$1';
 
   // signup api
   socket.on('signup_request', function (data) {
-    winston.log('debug', data);
+    console.log(data);
     var username = data.username;
     var phone_number = data.phone_number;
 
@@ -57,7 +57,7 @@ io.on('connection', function (socket) {
 
   // login api
   socket.on('login_request', function (data) {
-    winston.log('debug', data);
+    console.log(data);
     var token = data.token;
 
     pg.connect(pgConnString, function(err, client, done) {
@@ -85,7 +85,7 @@ io.on('connection', function (socket) {
 
   // roomlist api
   socket.on('roomlist_request', function (data) {
-    winston.log('debug', data);
+    console.log(data);
 
     pg.connect(pgConnString, function(err, client, done) {
       if(err) {
@@ -96,7 +96,7 @@ io.on('connection', function (socket) {
 
         if(result){
           console.log(result.rows);
-          socket.emit('roomlist_response', result.rows);
+          socket.emit('roomlist_response', JSON.stringify(result.rows));
         }
 
         if(err) {
@@ -112,7 +112,7 @@ io.on('connection', function (socket) {
 
   // roomlist api
   socket.on('topiclist_request', function (data) {
-    winston.log('debug', data);
+    console.log(data);
     var room_id = data.room_id;
 
     pg.connect(pgConnString, function(err, client, done) {
@@ -142,5 +142,5 @@ io.on('connection', function (socket) {
 
 
 server.listen(port, function () {
-  winston.log('debug', 'Server listening at port %d', port);
+  console.log('Server listening at port %d', port);
 });

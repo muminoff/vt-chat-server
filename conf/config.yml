@@ -1,0 +1,16 @@
+---
+  hostname: "localhost"
+  port: 3000
+  domain: "drivers.uz"
+  log_file: "logs/vt.log"
+  log_level: "debug" #info, warning, error, critical
+  postgresql: 
+    host: "localhost"
+    port: 5432
+    user: "vt"
+    password: "vt"
+    name: "vt"
+  redis: 
+    host: "localhost"
+    port: 6379
+    db: 0
