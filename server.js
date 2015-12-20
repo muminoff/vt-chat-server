@@ -19,12 +19,13 @@ var pgDBName = config.postgresql.name;
 var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
 var port = process.env.PORT || config.port;
 
-// Api import
+// Api
 var signupUser = require('./api/signup');
 var signinUser = require('./api/signin');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
+var subscribedTopics = require('./api/subscribedtopics');
 
 // Set log level from config
 logger.level = config.log_level;
@@ -73,8 +74,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.token = token.token;
         logger.debug('Sending ->', token);
         socket.emit('signup_response', token);
+        logger.debug('Getting subscribed rooms for user', socket.username);
 
       });
+
     });
 
     // Signin request api
