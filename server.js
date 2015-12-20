@@ -82,7 +82,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
       logger.debug('signin_request came', data);
 
       signinUser(client, data.token, logger, function(resp){
-        done();
         logger.debug('Got response from api', resp);
         logger.debug('This is username from api', resp.username);
         logger.debug('This is token from request', data.token);
@@ -100,7 +99,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
       logger.debug('roomlist_request came');
 
       roomList(client, logger, function(roomlist){
-        done();
         socket.emit('roomlist_response', roomlist);
       });
 
@@ -114,7 +112,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var roomId = data.room_id;
 
       topicList(client, roomId, logger, function(topiclist){
-        done();
         socket.emit('topiclist_response', topiclist);
       });
 
@@ -133,7 +130,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var attrs = data.attrs;
 
       topicCreate(client, roomId, logger, function(resp, error){
-        done();
         socket.emit('topiccreate_response', resp);
       });
 
