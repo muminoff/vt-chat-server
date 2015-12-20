@@ -134,8 +134,12 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var attrs = data.attrs;
 
       topicCreate(client, title, body, parent_room, owner, attrs, logger, function(resp){
+
         logger.debug('Sending ->', resp);
         socket.emit('topiccreate_response', resp);
+
+        // Broadcast topic event to all including this socket
+        io.emit('topic_events', {'event': 'created', 'object': resp);
       });
 
     });
