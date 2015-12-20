@@ -144,6 +144,30 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
+    // Message send api
+    socket.on('messagesend_request', function(data) {
+
+      logger.debug('messagesend_request came', data);
+
+      var topic_id = data.topic_id;
+      var sender = socket.username;
+      var reply_to = data.reply_to;
+      var body = data.body;
+      var attrs = data.attrs;
+
+      logger.debug('sender ----->', sender);
+
+      messageSend(client, topic_id, sender, reply_to, body, attrs, logger, function(resp){
+
+        logger.debug('Sending ->', resp);
+        socket.emit('messagesend_response', resp);
+
+        // Broadcast topic event to all including this socket
+        io.emit('message_events', {'event_type': 'created', 'object': resp});
+      });
+
+    });
+
     // Client disconnected 
     socket.on('disconnect', function(){
       logger.debug('Client disconnected', socket.id);

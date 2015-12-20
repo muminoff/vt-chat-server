@@ -1,5 +1,5 @@
 var db = require('../db');
-var createTopicQuery = 'INSERT INTO topics (title, body, parent_room, owner, attrs) VALUES($1, $2, $3, (SELECT id FROM users WHERE username=$4), $5) RETURNING id, title, body, parent_room, owner, attrs, EXTRACT(epoch FROM created_at)::int AS created_at';
+var createTopicQuery = 'INSERT INTO topics (title, body, parent_room, owner, attrs) VALUES($1, $2, $3, (SELECT id FROM users WHERE username=$4), $5) RETURNING id, title, body, parent_room, archived, owner, attrs, EXTRACT(epoch FROM created_at)::int AS created_at';
 
 var topicCreate = module.exports = function(client, title, body, parent_room, owner, attrs, logger, callback) {
 
