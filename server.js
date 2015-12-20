@@ -139,7 +139,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.emit('topiccreate_response', resp);
 
         // Broadcast topic event to all including this socket
-        io.emit('topic_events', {'event': 'created', 'object': resp);
+        io.emit('topic_events', {'event_type': 'created', 'object': resp});
       });
 
     });
