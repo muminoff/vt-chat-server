@@ -4,6 +4,7 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var pg = require('pg');
+pg.defaults.poolSize = 200;
 
 // Logger and config
 var logger = require('./logger');
@@ -57,8 +58,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
     logger.debug('Client connected', socket.handshake.address);
     logger.debug('Socket ID:', socket.id);
 
-    socket.authenticated = false;
-
     // Signup request api
     socket.on('signup_request', function(data){
 
@@ -67,17 +66,12 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var username = data.username;
       var phone_number = data.phone_number;
 
-      signupUser(client, username, phone_number, logger, function(token, error){
-        done();
+      signupUser(client, username, phone_number, logger, function(token){
+
         socket.username = username;
         socket.token = token.token;
-        socket.emit('signup_response', JSON.stringify(token));
-
-        if(error===true){
-          socket.disconnect('unauthorized');
-        } else {
-          socket.authenticated = true;
-        }
+        logger.debug('Sending ->', token);
+        socket.emit('signup_response', token);
 
       });
     });
@@ -87,17 +81,14 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       logger.debug('signin_request came', data);
 
-      signinUser(client, data.token, logger, function(resp, error){
+      signinUser(client, data.token, logger, function(resp){
         done();
+        logger.debug('Got response from api', resp);
+        logger.debug('This is username from api', resp.username);
+        logger.debug('This is token from request', data.token);
         socket.username = resp.username;
         socket.token = data.token;
-        socket.emit('signin_response', JSON.stringify(resp));
-
-        if(error===true){
-          socket.disconnect('unauthorized');
-        } else {
-          socket.authenticated = true;
-        }
+        socket.emit('signin_response', resp);
 
       });
 
@@ -108,17 +99,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       logger.debug('roomlist_request came');
 
-      if(socket.authenticated===false){
-        socket.emit('roomlist_response', { 'status': 'fail', 'detail': 'not authenticated' });
-        socket.disconnect('unauthorized');
-      }
-
-      if(socket.authenticated===true) {
-        roomList(client, logger, function(roomlist){
-          done();
-          socket.emit('roomlist_response', JSON.stringify(roomlist));
-        });
-      }
+      roomList(client, logger, function(roomlist){
+        done();
+        socket.emit('roomlist_response', roomlist);
+      });
 
     });
 
@@ -129,17 +113,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       var roomId = data.room_id;
 
-      if(socket.authenticated===false){
-        socket.emit('topiclist_response', { 'status': 'fail', 'detail': 'not authenticated' });
-        socket.disconnect('unauthorized');
-      }
-
-      if(socket.authenticated===true) {
-        topicList(client, roomId, logger, function(topiclist){
-          done();
-          socket.emit('topiclist_response', JSON.stringify(topiclist));
-        });
-      }
+      topicList(client, roomId, logger, function(topiclist){
+        done();
+        socket.emit('topiclist_response', topiclist);
+      });
 
     });
 
@@ -155,17 +132,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var roomId = data.room_id;
       var attrs = data.attrs;
 
-      if(socket.authenticated===false) {
-        socket.emit('topiccreate_response', { 'status': 'fail', 'detail': 'not authenticated' });
-        socket.disconnect('unauthorized');
-      }
-
-      if(socket.authenticated===true) {
-        topicCreate(client, roomId, logger, function(resp, error){
-          done();
-          socket.emit('topiccreate_response', JSON.stringify(resp));
-        });
-      }
+      topicCreate(client, roomId, logger, function(resp, error){
+        done();
+        socket.emit('topiccreate_response', resp);
+      });
 
     });
 
@@ -175,6 +145,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
       logger.debug('Client username was', socket.username);
       logger.debug('Client token was', socket.token);
       delete socket;
+      logger.debug('Socket destroyed', socket.id);
     });
 
   });

@@ -4,33 +4,50 @@ var getTokenQuery = 'SELECT token FROM tokens WHERE user_id=(SELECT id FROM user
 
 var signupUser = module.exports = function(client, username, phone_number, logger, callback) {
 
+  logger.debug('Inside signup api');
+  logger.debug('Got username', username);
+  logger.debug('Got phone_number', phone_number);
+
   // username not given
   if(!username) {
     var msg = 'Username not given';
     logger.error(msg);
-    return callback({ 'status': 'fail', 'detail': msg }, true);
+    return callback({ 'status': 'fail', 'detail': msg });
   }
+
+  logger.debug('I passed username checking');
 
   // phone_number not given
   if(!phone_number) {
     var msg = 'Phone number not given';
     logger.error(msg);
-    return callback({ 'status': 'fail', 'detail': msg }, true);
+    return callback({ 'status': 'fail', 'detail': msg });
   }
 
+  logger.debug('I passed phone_number checking');
+
   // insert username and phone_number
-  var insertUser = client.query(insertUserQuery, [username, phone_number]);
-  insertUser.on('error', function(err) {
-    logger.error("==============================>");
-    logger.error(err);
+  client.query(insertUserQuery, [username, phone_number], function(err, result){
+    logger.debug('Inside insert user query');
+
+    if(err) {
+      logger.debug('Error inside insert user query');
+    }
+
   });
-  var getToken = client.query(getTokenQuery, [phone_number]);
-  getToken.on('error', function(err) {
-    logger.error("==============================>");
-    logger.error(err);
+
+  client.query(getTokenQuery, [phone_number], function(err, result) {
+    logger.debug('Inside get token query');
+
+    if(err) {
+      logger.debug('Error inside get token query');
+    } else {
+      logger.debug('No error when getting token with phone_number', phone_number);
+      logger.debug('This is result rows from db', result.rows);
+      callback(result.rows[0]);
+    }
+
   });
-  getToken.on('row', function(row) {
-    return callback(row, false);
-  });
+
 
 }
