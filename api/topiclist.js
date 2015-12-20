@@ -19,7 +19,7 @@ var topicList = module.exports = function(client, roomId, logger, callback) {
       return callback({ 'status': 'fail', 'detail': msg });
     }
 
-    return callback({ 'status': 'ok', 'topiclist': result.rows });
+    return callback({ 'status': 'ok', 'data': result.rows });
 
   });
 
