@@ -24,6 +24,7 @@ var signupUser = require('./api/signup');
 var signinUser = require('./api/signin');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
+var topicCreate = require('./api/topiccreate');
 
 // Set log level from config
 logger.level = config.log_level;
@@ -53,7 +54,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
   // });
 
   // Client connected
-  io.on('connection', function (socket) {
+  io.sockets.on('connection', function (socket) {
 
     logger.debug('Client connected', socket.handshake.address);
     logger.debug('Socket ID:', socket.id);
@@ -87,6 +88,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('This is token from request', data.token);
         socket.username = resp.username;
         socket.token = data.token;
+        logger.debug('Sending ->', resp);
         socket.emit('signin_response', resp);
 
       });
@@ -99,6 +101,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
       logger.debug('roomlist_request came');
 
       roomList(client, logger, function(roomlist){
+        logger.debug('Sending ->', roomlist);
         socket.emit('roomlist_response', roomlist);
       });
 
@@ -109,9 +112,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       logger.debug('topiclist_request came');
 
-      var roomId = data.room_id;
+      var room_id = data.room_id;
 
-      topicList(client, roomId, logger, function(topiclist){
+      topicList(client, room_id, logger, function(topiclist){
+        logger.debug('Sending ->', topiclist);
         socket.emit('topiclist_response', topiclist);
       });
 
@@ -120,16 +124,17 @@ pg.connect(pgConnectionString, function(err, client, done) {
     // Topic create request api
     socket.on('topiccreate_request', function(data) {
 
-      logger.debug('topiccreate_request came');
+      logger.debug('topiccreate_request came', data);
 
       var title = data.title;
       var body = data.body;
-      var parent_room_id = data.parent_room;
+      var parent_room = data.parent_room;
       var owner = socket.username;
-      var roomId = data.room_id;
+      logger.debug('owner ----->', owner);
       var attrs = data.attrs;
 
-      topicCreate(client, roomId, logger, function(resp, error){
+      topicCreate(client, title, body, parent_room, owner, attrs, logger, function(resp){
+        logger.debug('Sending ->', resp);
         socket.emit('topiccreate_response', resp);
       });
 
@@ -147,6 +152,15 @@ pg.connect(pgConnectionString, function(err, client, done) {
   });
 
 });
+
+var topicEventChannel = io.of('/topic_events').use(function(socket, next){
+  logger.debug("Authenticating new socket connection to /topic_events ...")
+  next();
+}); 
+
+topicEventChannel.on('connection', function(socket){
+  console.log("Socket " + socket.id + " now connected to namespace /topic_events");
+})
 
 server.listen(port, function () {
   logger.info('Server listening at port %d', port);
