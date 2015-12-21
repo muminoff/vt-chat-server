@@ -5,6 +5,7 @@ var socket = require('socket.io-client')('http://localhost:3000');
 socket.on('connect', function(){
   // var myToken = 'e92a1e6551f34e1c9a62736d77a5eafc';
   console.log('Connected to socket.io server');
+  socket.emit('authenticate', {'token': '37481bc1f8b4443c87b32c9b321f0fad'});
   // socket.emit('signup_request', {'username': 'bahrom25', 'phone_number': '9981255'});
   // socket.emit('signup_request', {'username': '9981235'});
   // socket.emit('login_request', {'token': myToken });
@@ -22,7 +23,8 @@ socket.on('connect', function(){
 });
 // socket.on('topiclist_response', function(data){
 // socket.on('signup_response', function(data){
-socket.on('signin_response', function(data){
+// socket.on('signin_response', function(data){
+socket.on('authenticate', function(data){
 // socket.on('signup_response', function(data){
   console.log(data);
 });

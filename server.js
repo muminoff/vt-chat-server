@@ -19,6 +19,7 @@ var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + p
 var port = process.env.PORT || config.port;
 
 // Api
+var checkToken = require('./api/signin');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
@@ -54,11 +55,15 @@ pg.connect(pgConnectionString, function(err, client, done) {
       var token = data.token;
       logger.debug('Token received: ', token);
 
-      if(isTokenValid(token)===true) {
-        socket.auth = true;
-        logger.debug('Connection is now authenticated', socket.id);
-        socket.emit('authenticate', true);
-      }
+      checkToken(client, token, logger, function(isTokenValid) {
+        if(isTokenValid===true) {
+          socket.auth = true;
+          socket.token = token;
+          logger.debug('Connection is now authenticated', socket.id);
+          socket.emit('authenticate', true);
+        }
+      });
+
     });
 
     setTimeout(function() {
