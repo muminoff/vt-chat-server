@@ -31,9 +31,9 @@ router.get('/', function(req, res) {
 app.use('/api', router);
 
 // Api
-var authenticate = require('./api/authenticate');
-// var roomList = require('./api/roomlist');
-// var topicList = require('./api/topiclist');
+var authenticateUser = require('./api/authenticate');
+var roomList = require('./api/roomlist');
+var topicList = require('./api/topiclist');
 // var topicCreate = require('./api/topiccreate');
 // var subscribedTopics = require('./api/subscribedtopics');
 
@@ -58,8 +58,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
   // Client connected
   io.sockets.on('connection', function (socket) {
 
-    logger.debug('Client connected', socket.handshake.address);
-    logger.debug('Socket ID:', socket.id);
+    logger.debug('Socket connected', socket.id);
+    logger.debug('Socket address:', socket.handshake.address);
     socket.auth = false;
 
     // Authentication
@@ -68,68 +68,68 @@ pg.connect(pgConnectionString, function(err, client, done) {
       try {
         var token = data.token;
       } catch (err) {
+        logger.error('No token given for authentication', socket.id);
         return socket.emit('authenticate', {status: 'fail', detail: 'token not given'});
       }
 
-      logger.debug('Token received: ', token);
-      authenticate(client, token, logger, function(user) {
+      logger.debug('Token ' + token + ' received from socket', socket.id);
+      authenticateUser(client, token, logger, function(user) {
         if(user && 'id' in user) {
           socket.auth = true;
           socket.user_id = user.id;
-          socket.username = user.username;
-          logger.debug('User ' + socket.username + ' authenticated');
+          logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('authenticate', {status: 'ok'});
         } else {
-          logger.debug('Invalid token', token);
+          logger.error('Invalid token', token);
           socket.emit('authenticate', {status: 'fail', detail: 'invalid token'});
         }
       });
 
     });
 
+    // If socket not authenticated kick it away immediately
     setTimeout(function() {
       if(!socket.auth) {
-        logger.debug('Authentication timeout and disconnecting socket', socket.id, '...');
+        logger.error('Socket authentication timeout', socket.id);
         socket.disconnect();
       }
     }, 1000);
 
 
-    // // Roomlist request api
-    // socket.on('roomlist_request', function() {
+    // Roomlist api
+    socket.on('roomlist_request', function() {
 
-    //   if(!socket.auth) {
-    //     return socket.emit('roomlist_response', {'status': 'fail', 'detail': 'not authenticated'});
-    //   }
+      logger.info('User ' + socket.user_id + ' asks for room list');
 
-    //   logger.debug('roomlist_request came');
+      roomList(client, logger, function(roomlist){
+        logger.info('Sending room list to ' + socket.user_id);
+        logger.debug('Sending data ' + JSON.stringify(roomlist));
+        socket.emit('roomlist_response', { status: 'ok', data: roomlist });
+      });
 
-    //   roomList(client, logger, function(roomlist){
-    //     logger.debug('Sending ->', roomlist);
-    //     socket.emit('roomlist_response', roomlist);
-    //   });
+    });
 
-    // });
+    // Topiclist api
+    socket.on('topiclist_request', function(data) {
 
-    // // Topiclist request api
-    // socket.on('topiclist_request', function(data) {
+      logger.debug('User ' + socket.user_id + ' asks for topic list');
 
-    //   if(!socket.auth) {
-    //     return socket.emit('topiclist_response', {'status': 'fail', 'detail': 'not authenticated'});
-    //   }
+      try {
+        var room_id = data.room_id;
+      } catch (err) {
+        logger.error('No room id given for topiclist api', socket.id);
+        return socket.emit('topiclist_response', {status: 'fail', detail: 'room_id not given'});
+      }
 
-    //   logger.debug('topiclist_request came');
+      topicList(client, room_id, logger, function(topiclist){
+        logger.info('Sending topic list to ' + socket.user_id);
+        logger.debug('Sending data ' + JSON.stringify(topiclist));
+        socket.emit('topiclist_response', { status: 'ok', data: topiclist });
+      });
 
-    //   var room_id = data.room_id;
+    });
 
-    //   topicList(client, room_id, logger, function(topiclist){
-    //     logger.debug('Sending ->', topiclist);
-    //     socket.emit('topiclist_response', topiclist);
-    //   });
-
-    // });
-
-    // // Topic create request api
+    // // Topic create api
     // socket.on('topiccreate_request', function(data) {
 
     //   if(!socket.auth) {
@@ -186,11 +186,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     // Client disconnected 
     socket.on('disconnect', function(){
-      logger.debug('Client disconnected', socket.id);
-      logger.debug('Client username was', socket.username);
-      logger.debug('User ID was', socket.user_id);
+      logger.info('Client disconnected', socket.id);
+      logger.info('Client user_id was', socket.user_id);
       delete socket;
-      logger.debug('Socket destroyed', socket.id);
+      logger.warn('Socket destroyed', socket.id);
     });
 
   });

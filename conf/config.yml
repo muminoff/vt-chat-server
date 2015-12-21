@@ -3,7 +3,7 @@
   port: 3000
   domain: "drivers.uz"
   log_file: "logs/vt.log"
-  log_level: "debug" #info, warning, error, critical
+  log_level: "debug" #info, warn, error
   postgresql: 
     host: "localhost"
     port: 5432

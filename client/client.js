@@ -18,9 +18,9 @@ socket.on('connect', function(){
   // socket.emit('topiccreate_request', {'title': 'tttt', 'body': 'tttbody', 'parent_room': 2, 'attrs': null});
   // }, 2000);
   // setTimeout(function() {
-  //   socket.emit('roomlist_request');
+  // socket.emit('roomlist_request');
   // }, 2000);
-  // socket.emit('topiclist_request', {'room_id': 1});
+  socket.emit('topiclist_request', {'room_id': 1});
   // setTimeout(function(){
   //   socket.emit('roomlist_request');
   // }, 1000);
@@ -35,8 +35,8 @@ socket.on('authenticate', function(data){
 socket.on('roomlist_response', function(data){
   console.log(data);
 });
-// socket.on('topiclist_response', function(data){
-socket.on('topiccreate_response', function(data){
+socket.on('topiclist_response', function(data){
+// socket.on('topiccreate_response', function(data){
   console.log(data);
 });
 // socket.on('disconnect', function(){
