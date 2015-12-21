@@ -4,7 +4,6 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var pg = require('pg');
-pg.defaults.poolSize = 200;
 
 // Logger and config
 var logger = require('./logger');
@@ -29,6 +28,9 @@ var subscribedTopics = require('./api/subscribedtopics');
 
 // Set log level from config
 logger.level = config.log_level;
+
+// DB pool size
+pg.defaults.poolSize = 200;
 
 // Initialize DB with client pool
 pg.connect(pgConnectionString, function(err, client, done) {
