@@ -5,7 +5,9 @@ var socket = require('socket.io-client')('http://localhost:3000');
 socket.on('connect', function(){
   // var myToken = 'e92a1e6551f34e1c9a62736d77a5eafc';
   console.log('Connected to socket.io server');
-  socket.emit('authenticate', {'token': '37481bc1f8b4443c87b32c9b321f0fad'});
+  // socket.emit('authenticate');
+  // socket.emit('authenticate', {'token': '37481bc1f8b4443c87b32c9b321f0fad'});
+  socket.emit('authenticate', {'token': '886ae2aaf8b44f11acb97163726b7119'});
   // socket.emit('signup_request', {'username': 'bahrom25', 'phone_number': '9981255'});
   // socket.emit('signup_request', {'username': '9981235'});
   // socket.emit('login_request', {'token': myToken });
@@ -15,7 +17,9 @@ socket.on('connect', function(){
   // setTimeout(function() {
   // socket.emit('topiccreate_request', {'title': 'tttt', 'body': 'tttbody', 'parent_room': 2, 'attrs': null});
   // }, 2000);
-  socket.emit('roomlist_request');
+  // setTimeout(function() {
+  //   socket.emit('roomlist_request');
+  // }, 2000);
   // socket.emit('topiclist_request', {'room_id': 1});
   // setTimeout(function(){
   //   socket.emit('roomlist_request');
