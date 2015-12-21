@@ -24,7 +24,7 @@ var signinUser = module.exports = function(client, token, logger, callback) {
     else {
       logger.debug('No error when getting username with token', token);
       logger.debug('This is result rows from db', result.rows);
-      return callback({ 'status': 'ok', 'username': result.rows[0].username});
+      return callback(result.rows[0]);
     }
   });
 

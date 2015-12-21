@@ -47,9 +47,34 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     logger.debug('Client connected', socket.handshake.address);
     logger.debug('Socket ID:', socket.id);
+    socket.auth = false;
+
+    // Authentication
+    socket.on('authenticate', function(data) {
+      var token = data.token;
+      logger.debug('Token received: ', token);
+
+      if(isTokenValid(token)===true) {
+        socket.auth = true;
+        logger.debug('Connection is now authenticated', socket.id);
+        socket.emit('authenticate', true);
+      }
+    });
+
+    setTimeout(function() {
+      if(!socket.auth) {
+        logger.debug('Authentication timeout and disconnecting socket', socket.id, '...');
+        socket.disconnect();
+      }
+    }, 1000);
+
 
     // Roomlist request api
     socket.on('roomlist_request', function() {
+
+      if(!socket.auth) {
+        return socket.emit('roomlist_response', {'status': 'fail', 'detail': 'not authenticated'});
+      }
 
       logger.debug('roomlist_request came');
 
@@ -62,6 +87,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     // Topiclist request api
     socket.on('topiclist_request', function(data) {
+
+      if(!socket.auth) {
+        return socket.emit('topiclist_response', {'status': 'fail', 'detail': 'not authenticated'});
+      }
 
       logger.debug('topiclist_request came');
 
@@ -76,6 +105,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     // Topic create request api
     socket.on('topiccreate_request', function(data) {
+
+      if(!socket.auth) {
+        return socket.emit('topiccreate_response', {'status': 'fail', 'detail': 'not authenticated'});
+      }
 
       logger.debug('topiccreate_request came', data);
 
@@ -99,6 +132,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     // Message send api
     socket.on('messagesend_request', function(data) {
+
+      if(!socket.auth) {
+        return socket.emit('messagesend_response', {'status': 'fail', 'detail': 'not authenticated'});
+      }
 
       logger.debug('messagesend_request came', data);
 
