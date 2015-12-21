@@ -1,4 +1,3 @@
-var db = require('../db');
 var getUsernameQuery = 'SELECT username FROM users WHERE id=(SELECT user_id FROM tokens WHERE token=$1)';
 
 var checkToken = module.exports = function(client, token, logger, callback) {

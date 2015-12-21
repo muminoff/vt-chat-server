@@ -2,6 +2,7 @@
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
+var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var pg = require('pg');
 
@@ -16,7 +17,18 @@ var pgHostname = config.postgresql.host;
 var pgPort = config.postgresql.port;
 var pgDBName = config.postgresql.name;
 var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
+
+// Express stuff
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 var port = process.env.PORT || config.port;
+
+// REST route
+var router = express.Router();
+router.get('/', function(req, res) {
+  res.json({ status: 'ok' });
+});
+app.use('/api', router);
 
 // Api
 var checkToken = require('./api/signin');

@@ -1,4 +1,3 @@
-var db = require('../db');
 var getSubscribedTopicsQuery = 'SELECT topic_id FROM subscribers WHERE user_id=(SELECT id FROM users WHERE username=$1)';
 
 var subscribedTopics = module.exports = function(client, username, logger, callback) {

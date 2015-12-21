@@ -1,4 +1,3 @@
-var db = require('../db');
 var insertUserQuery = 'INSERT INTO users (username, phone_number) SELECT CAST($1 AS VARCHAR), CAST($2 AS VARCHAR) WHERE NOT EXISTS (SELECT id FROM users WHERE phone_number=$2)';
 var getTokenQuery = 'SELECT token FROM tokens WHERE user_id=(SELECT id FROM users WHERE phone_number=$1)';
 

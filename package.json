@@ -25,7 +25,8 @@
     "start": "DEBUG=* node server.js"
   },
   "dependencies": {
-    "express": "3.4.8",
+    "body-parser": "^1.14.2",
+    "express": "^4.13.3",
     "js-yaml": "^3.4.6",
     "pg": "^4.4.3",
     "pg-hstore": "^2.3.2",
