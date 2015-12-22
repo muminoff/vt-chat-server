@@ -5,4 +5,3 @@ var authenticateUser = module.exports = function(client, token, logger, callback
     callback(result.rows[0]);
   });
 }
-

@@ -2,14 +2,7 @@ var createTopicQuery = 'INSERT INTO topics (title, body, parent_room, owner, att
 
 var topicCreate = module.exports = function(client, title, body, parent_room, owner, attrs, logger, callback) {
 
-  // roomid not given
-  if(!parent_room) {
-    var msg = 'parent room id not given';
-    logger.error(msg);
-    return callback({ 'status': 'fail', 'detail': msg });
-  }
-
-  // get topic list
+  // topic create
   client.query(createTopicQuery, [title, body, parent_room, owner, attrs], function(err, result) {
 
     if(err) {
