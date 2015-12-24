@@ -11,7 +11,3 @@
     pass: "vt"
     name: "vt"
     pool_size: 200
-  redis: 
-    host: "localhost"
-    port: 6379
-    db: 0
