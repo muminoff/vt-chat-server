@@ -89,14 +89,14 @@ pg.connect(pgConnectionString, function(err, client, done) {
     logger.debug('Socket address:', socket.handshake.address);
 
     // on authentication
-    socket.on('authenticate', function(data) {
+    socket.on('signin_request', function(data) {
 
       // if no token given
       try {
         var token = data.token;
       } catch (err) {
         logger.error('No token given for authentication', socket.id);
-        return socket.emit('authenticate', {status: 'fail', detail: 'token not given'});
+        return socket.emit('signin_response', {status: 'fail', detail: 'token not given'});
       }
 
       logger.debug('Token ' + token + ' received from socket', socket.id);
@@ -105,10 +105,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
           socket.auth = true;
           socket.user_id = user.id;
           logger.info('User ' + socket.user_id + ' authenticated');
-          socket.emit('authenticate', {status: 'ok'});
+          socket.emit('signin_response', {status: 'ok'});
         } else {
           logger.error('Invalid token', token);
-          socket.emit('authenticate', {status: 'fail', detail: 'invalid token'});
+          socket.emit('signing_response', {status: 'fail', detail: 'invalid token'});
         }
       });
 
@@ -120,7 +120,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.error('Socket authentication timeout', socket.id);
         socket.disconnect();
       }
-    }, 1000);
+    }, 60000);
 
 
     // roomlist api

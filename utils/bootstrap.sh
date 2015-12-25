@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 
 # Database and roles
-psql -c "drop database if exists vt"
-psql -c "drop role if exists vt"
-psql -c "create role vt with login password 'vt'"
-psql -c "create database vt owner vt encoding 'utf-8'"
-psql -c "grant all privileges on database vt to vt"
+psql -U postgres -c "drop database if exists vt"
+psql -U postgres -c "drop role if exists vt"
+psql -U postgres -c "create role vt with login password 'vt'"
+psql -U postgres -c "create database vt owner vt encoding 'utf-8'"
+psql -U postgres -c "grant all privileges on database vt to vt"
 
 # Extensions
-psql -d vt -c 'create extension "uuid-ossp"'
-psql -d vt -c "create extension pgcrypto"
+psql -U postgres -d vt -c 'create extension "uuid-ossp"'
+psql -U postgres -d vt -c "create extension pgcrypto"
 
 # Tables
 psql -d vt -U vt <utils/schema/users.sql
