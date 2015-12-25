@@ -205,6 +205,38 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
+    // topic delete api
+    socket.on('topicdelete_request', function(data) {
+
+      // if socket not authenticated
+      if(!socket.auth) {
+        return socket.emit('topicdelete_response', {'status': 'fail', 'detail': 'not authenticated'});
+      }
+
+      logger.info('User ' + socket.user_id + ' asks for topic delete');
+
+      // if topic title not given
+      try {
+        var topic_id = data.title;
+      } catch (err) {
+        logger.error('Parameters not fully given for topicdelete api', socket.id);
+        return socket.emit('topicdelete_response', {status: 'fail', detail: 'topic_id not given'});
+      }
+
+      var owner = socket.user_id;
+
+      // send topic delete result to user
+      topicDelete(client, topic_id, owner, logger, function(resp){
+
+        logger.debug('Sending ->', resp);
+        socket.emit('topicdelete_response', resp);
+
+        // Broadcast topic event to all including this socket
+        io.emit('topic_events', {'event_type': 'deleted', 'object': resp});
+      });
+
+    });
+
     client.query('LISTEN topic_event', function(err, result) {
       logger.info("Listen started for topic_event");
     });
