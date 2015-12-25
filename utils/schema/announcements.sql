@@ -1,10 +1,9 @@
-/* topics table */
-create table "topics" (
+/* announcement table */
+create table "announcements" (
   "id" bigserial primary key,
   "title" character varying(32) not null,
   "body" text,
   "parent_room" bigint not null references rooms(id),
-  "solved" bool default false,
   "archived" bool default false,
   "owner" bigint not null references users(id),
   "attrs" jsonb,
@@ -12,4 +11,4 @@ create table "topics" (
 );
 
 /* topics table index */
-create index active_topics on topics (id) where archived is not true;
+create index active_announcements on announcements (id) where archived is not true;

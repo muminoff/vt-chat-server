@@ -16,6 +16,7 @@ psql -d vt -U vt <utils/schema/users.sql
 psql -d vt -U vt <utils/schema/tokens.sql
 psql -d vt -U vt <utils/schema/rooms.sql
 psql -d vt -U vt <utils/schema/topics.sql
+psql -d vt -U vt <utils/schema/announcements.sql
 psql -d vt -U vt <utils/schema/subscribers.sql
 psql -d vt -U vt <utils/schema/messages.sql
 
@@ -24,15 +25,4 @@ psql -d vt -U vt -c "insert into users (username, phone_number) values('testuser
 ('testuser5', '9989010000004'), ('testuser6', '9989010000005'), ('testuser7', '9989010000006'), ('testuser8', '9989010000007'), ('testuser9', '9989010000008'), ('testuser10', '9989010000009')"
 
 # Dummy rooms
-psql -d vt -U vt -c "insert into rooms (subject, description, owner) values('test room 1', 'test room 1 description', 1), ('test room 2', 'test room 2 description', 2), ('test room 3', 'test room 3 description', 3),
-('test room 4', 'test room 4 description', 4), ('test room 5', 'test room 5 description', 5), ('test room 6', 'test room 6 description', 6), ('test room 7', 'test room 7 description', 7),
-('test room 8', 'test room 8 description', 8), ('test room 9', 'test room 9 description', 9), ('test room 10', 'test room 10 description', 10)"
-
-# Dummy topics
-psql -d vt -U vt -c "insert into topics (title, body, parent_room, owner) values('test topic 1', 'test topic 1 question', 1, 10), ('test topic 2', 'test topic 2 question', 2, 9),
-('test topic 3', 'test topic 3 question', 3, 8), ('test topic 4', 'test topic 4 question', 4, 7), ('test topic 5', 'test topic 5 question', 5, 6), ('test topic 6', 'test topic 6 question', 6, 5),
-('test topic 7', 'test topic 7 question', 7, 4), ('test topic 8', 'test topic 8 question', 8, 3), ('test topic 9', 'test topic 9 question', 9, 2), ('test topic 10', 'test topic 10 question', 10, 1)"
-
-# Dummy messages
-psql -d vt -U vt -c "insert into messages (topic_id, sender, body) values(1, 1, 'test message'), (1, 2, 'test message'), (1, 3, 'test message'), (1, 4, 'test message'),
-(1, 5, 'test message'), (1, 6, 'test message'), (1, 7, 'test message'), (1, 8, 'test message'), (1, 9, 'test message'), (1, 10, 'test message')"
+psql -d vt -U vt -c "insert into rooms (subject, description, owner) values('Уведомления', 'Важные уведомления', 1), ('SOS', 'Нужна помощь', 2), ('Потеря', 'Ищем документы, и тд.', 3), ('Базар', 'Купля-продажа', 4), ('Днюхи', 'Поздравляем', 5), ('Оффтоп', 'Обо всем', 6)"

@@ -23,14 +23,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 var port = process.env.PORT || config.port;
 
-// rest route
-var router = express.Router();
-router.get('/', function(req, res) {
-  res.json({ status: 'ok' });
-});
-app.use('/api', router);
-
 // api import
+var signupUser = require('./api/signup');
 var authenticateUser = require('./api/authenticate');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
@@ -41,6 +35,38 @@ logger.level = config.log_level;
 
 // db pool size
 pg.defaults.poolSize = config.postgresql.pool_size;
+
+// rest route
+var router = express.Router();
+
+router.post('/signup', function(req, res) {
+
+  var username = req.body.username;
+  var phone_number = req.body.phone_number;
+
+  if(!username) {
+    return res.json({ status: 'fail', detail: 'username not given' });
+  }
+
+  if(!phone_number) {
+    return res.json({ status: 'fail', detail: 'phone_number not given' });
+  }
+
+  pg.connect(pgConnectionString, function(err, client, done) {
+
+    signupUser(client, username, phone_number, logger, function(token) {
+      logger.debug('Got token from API', token);
+      logger.info('User', username, 'signed up');
+      logger.info('Token', token);
+      return res.json(token);
+    });
+
+    // res.json({ status: 'ok' });
+
+  });
+});
+
+app.use('/api', router);
 
 // initialize DB with client pool
 pg.connect(pgConnectionString, function(err, client, done) {
@@ -177,6 +203,16 @@ pg.connect(pgConnectionString, function(err, client, done) {
         io.emit('topic_events', {'event_type': 'created', 'object': resp});
       });
 
+    });
+
+    client.query('LISTEN topic_event', function(err, result) {
+      logger.info("Listen started for topic_event");
+    });
+
+    // Topic created events
+    client.on('notification', function(data) {
+      logger.info('DB event fired', data);
+      socket.emit('topic_events', data.payload);
     });
 
     // Client disconnected 
