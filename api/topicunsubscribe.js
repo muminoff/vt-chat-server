@@ -1,9 +1,9 @@
-var topicDeleteQuery = ' FROM topics WHERE id=$1 AND owner=$2';
+var topicDeleteQuery = 'DELETE FROM topics WHERE topic_id=$1 AND user_id=$2';
 
 var topicDelete = module.exports = function(client, topic_id, owner, logger, callback) {
 
   // topic create
-  client.query(topicDeleteQuery, [topic_id, owner], function(err, result) {
+  client.query(topicDeleteQuery, [topic_id, owner, attrs], function(err, result) {
 
     if(err) {
       logger.error(err);

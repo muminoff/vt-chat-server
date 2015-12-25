@@ -29,6 +29,8 @@ var authenticateUser = require('./api/authenticate');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
+var topicDelete = require('./api/topicdelete');
+var topicUnsubscribe = require('./api/topicunsubscribe');
 
 // set log level from config
 logger.level = config.log_level;
