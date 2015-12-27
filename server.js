@@ -26,7 +26,7 @@ var port = process.env.PORT || config.port;
 // api import
 var signupUser = require('./api/signup');
 var authenticateUser = require('./api/authenticate');
-var getUserTopicList = require('./api/usertopiclist');
+// var getUserTopicList = require('./api/usertopiclist');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
