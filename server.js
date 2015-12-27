@@ -114,9 +114,9 @@ pg.connect(pgConnectionString, function(err, client, done) {
       });
 
       //get subscribed topic list from db
-      getUserTopicList(client, user_id, logger, function(topiclist) {
+      // getUserTopicList(client, user_id, logger, function(topiclist) {
 
-      });
+      // });
 
     });
 
