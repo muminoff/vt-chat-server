@@ -144,6 +144,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
             var message_topic_id = data.topic_id;
             var message_body = data.body;
             var message_reply_to = data.reply_to;
+            logger.debug('Got reply_to', message_reply_to, typeof message_reply_to);
 
             logger.info('Message came from topic', topicid, 'with data', data);
             logger.debug('Saving message to DB');
