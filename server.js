@@ -108,24 +108,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
 
-          //get subscribed topic list from db
-          userTopicList(client, socket.user_id, logger, function(topiclist) {
-            logger.debug('Got topic list from API', topiclist);
-            socket.topiclist = topiclist;
-
-            logger.info('User', socket.user_id, 'has', socket.topiclist.length, 'topics');
-
-            // handle listeners for these topics
-            for (var i = 0; i < socket.topiclist.length; i++) {
-              logger.debug('Listener for topic ->', socket.topiclist[i].id, 'started');
-              socket.on('topic_' + socket.topiclist[i].id, function(data) {
-                logger.info('Message came from topic', socket.topiclist[i].id, 'with data', data);
-                socket.emit('topic_' + socket.topiclist[i].id, data);
-              });
-            }
-
-          });
-
         } else {
           logger.error('Invalid token', token);
           socket.emit('signing_response', {status: 'fail', detail: 'invalid token'});
@@ -141,6 +123,28 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.disconnect();
       }
     }, 60000);
+
+    setTimeout(function() {
+      //get subscribed topic list from db
+      userTopicList(client, socket.user_id, logger, function(topiclist) {
+        logger.debug('Got topic list from API', topiclist);
+        socket.topiclist = topiclist;
+
+        logger.info('User', socket.user_id, 'has', socket.topiclist.length, 'topics');
+
+        // handle listeners for these topics
+        for (var i = 0; i < socket.topiclist.length; i++) {
+          var topicid = socket.topiclist[i].id;
+          logger.debug('Listener for topic ->', topicid, 'started');
+          socket.on('topic_' + topicid, function(data) {
+            logger.info('Message came from topic', topicid, 'with data', data);
+             //socket.broadcast.emit('topic_' + topicid, data);
+             io.emit('topic_' + topicid, data);
+          });
+        }
+
+      });
+    }, 2000);
 
 
     // roomlist api
