@@ -25,7 +25,3 @@ create trigger update_modified_column_trigger
 before update on users 
 for each row 
   execute procedure update_modified_column();
-
-/* create view user_profiles as */
-/* select id, username, phone_number, roles, profile, vt, extract(epoch from joined)::int as joined, extract(epoch from modified)::int as modified */
-/* from users; */

@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 
 # Database and roles
-psql -U postgres -c "drop database if exists vt"
-psql -U postgres -c "drop role if exists vt"
-psql -U postgres -c "create role vt with login password 'vt'"
-psql -U postgres -c "create database vt owner vt encoding 'utf-8'"
-psql -U postgres -c "grant all privileges on database vt to vt"
+psql -U sardor -c "drop database if exists vt"
+psql -U sardor -c "drop role if exists vt"
+psql -U sardor -c "create role vt with login password 'vt'"
+psql -U sardor -c "create database vt owner vt encoding 'utf-8'"
+psql -U sardor -c "grant all privileges on database vt to vt"
 
 # Extensions
-psql -U postgres -d vt -c 'create extension "uuid-ossp"'
-psql -U postgres -d vt -c "create extension pgcrypto"
+psql -U sardor -d vt -c 'create extension "uuid-ossp"'
+psql -U sardor -d vt -c "create extension pgcrypto"
 
 # Tables
 psql -d vt -U vt <utils/schema/users.sql
@@ -20,9 +20,8 @@ psql -d vt -U vt <utils/schema/announcements.sql
 psql -d vt -U vt <utils/schema/subscribers.sql
 psql -d vt -U vt <utils/schema/messages.sql
 
-# Dummy users
-psql -d vt -U vt -c "insert into users (username, phone_number) values('testuser1', '9989010000000'), ('testuser2', '9989010000001'), ('testuser3', '9989010000002'), ('testuser4', '9989010000003'),
-('testuser5', '9989010000004'), ('testuser6', '9989010000005'), ('testuser7', '9989010000006'), ('testuser8', '9989010000007'), ('testuser9', '9989010000008'), ('testuser10', '9989010000009')"
+# VT Robot
+psql -d vt -U vt -c "insert into users (username, phone_number) values('VTRobot', '777')"
 
 # Dummy rooms
-psql -d vt -U vt -c "insert into rooms (subject, description, owner) values('Уведомления', 'Важные уведомления', 1), ('SOS', 'Нужна помощь', 2), ('Потеря', 'Ищем документы, и тд.', 3), ('Базар', 'Купля-продажа', 4), ('Днюхи', 'Поздравляем', 5), ('Оффтоп', 'Обо всем', 6)"
+psql -d vt -U vt -c "insert into rooms (subject, description, owner) values('Уведомления', 'Важные уведомления', 1), ('SOS', 'Нужна помощь', 1), ('Потеря', 'Ищем документы, и тд.', 1), ('Базар', 'Купля-продажа', 1), ('Днюхи', 'Поздравляем', 1), ('Оффтоп', 'Обо всем', 1)"

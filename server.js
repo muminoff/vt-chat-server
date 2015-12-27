@@ -63,8 +63,6 @@ router.post('/signup', function(req, res) {
       return res.json(token);
     });
 
-    // res.json({ status: 'ok' });
-
   });
 });
 

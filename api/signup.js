@@ -1,6 +1,6 @@
 // var insertUserQuery = 'INSERT INTO users (username, phone_number) values($1, $2)';
 var insertUserQuery = 'INSERT INTO users (username, phone_number) SELECT CAST($1 AS VARCHAR), CAST($2 AS VARCHAR) WHERE NOT EXISTS (SELECT id FROM users WHERE phone_number=$2)';
-var getTokenQuery = 'SELECT token FROM tokens WHERE user_id=(SELECT id FROM users WHERE username=$1)';
+var getTokenQuery = 'SELECT token FROM tokens WHERE user_id=(SELECT id FROM users WHERE phone_number=$2)';
 
 var signupUser = module.exports = function(client, username, phone_number, logger, callback) {
 
