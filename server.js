@@ -30,6 +30,7 @@ var userTopicList = require('./api/usertopiclist');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
+var messageSave = require('./api/messagesave');
 
 // set log level from config
 logger.level = config.log_level;
@@ -134,13 +135,25 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
         // handle listeners for these topics
         for (var i = 0; i < socket.topiclist.length; i++) {
+
           var topicid = socket.topiclist[i].id;
           logger.debug('Listener for topic ->', topicid, 'started');
+
           socket.on('topic_' + topicid, function(data) {
+
+            var message_topic_id = data.topic_id;
+            var message_body = data.body;
+            var message_reply_to = data.reply_to;
+
             logger.info('Message came from topic', topicid, 'with data', data);
-             //socket.broadcast.emit('topic_' + topicid, data);
-             io.emit('topic_' + topicid, data);
+            logger.debug('Saving message to DB');
+
+            messageSave(client, message_topic_id, socket.user_id, message_reply_to, message_body, logger, function(msg) {
+              logger.debug('Got msg from API', msg);
+              io.emit('topic_' + topicid, msg);
+            });
           });
+
         }
 
       });
