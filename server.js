@@ -29,8 +29,6 @@ var authenticateUser = require('./api/authenticate');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
-var topicDelete = require('./api/topicdelete');
-var topicUnsubscribe = require('./api/topicunsubscribe');
 
 // set log level from config
 logger.level = config.log_level;
@@ -163,8 +161,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
         return socket.emit('topiclist_response', {status: 'fail', detail: 'room_id not given'});
       }
 
-      // send room list
-      topicList(client, room_id, logger, function(topiclist){
+      // send topic list
+      topicList(client, room_id, socket.user_id, logger, function(topiclist){
         logger.info('Sending topic list to ' + socket.user_id);
         logger.debug('Sending data ' + JSON.stringify(topiclist));
         socket.emit('topiclist_response', { status: 'ok', data: topiclist });
@@ -203,38 +201,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
         // Broadcast topic event to all including this socket
         io.emit('topic_events', {'event_type': 'created', 'object': resp});
-      });
-
-    });
-
-    // topic delete api
-    socket.on('topicdelete_request', function(data) {
-
-      // if socket not authenticated
-      if(!socket.auth) {
-        return socket.emit('topicdelete_response', {'status': 'fail', 'detail': 'not authenticated'});
-      }
-
-      logger.info('User ' + socket.user_id + ' asks for topic delete');
-
-      // if topic title not given
-      try {
-        var topic_id = data.title;
-      } catch (err) {
-        logger.error('Parameters not fully given for topicdelete api', socket.id);
-        return socket.emit('topicdelete_response', {status: 'fail', detail: 'topic_id not given'});
-      }
-
-      var owner = socket.user_id;
-
-      // send topic delete result to user
-      topicDelete(client, topic_id, owner, logger, function(resp){
-
-        logger.debug('Sending ->', resp);
-        socket.emit('topicdelete_response', resp);
-
-        // Broadcast topic event to all including this socket
-        io.emit('topic_events', {'event_type': 'deleted', 'object': resp});
       });
 
     });

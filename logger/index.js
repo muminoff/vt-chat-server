@@ -1,7 +1,6 @@
 var winston = require('winston');
 var config = require('../utils/config');
 
-
 var logger = module.exports = new (winston.Logger)({
   transports: [
     new (winston.transports.File)({
@@ -20,14 +19,3 @@ var logger = module.exports = new (winston.Logger)({
     }),
   ]
 });
-
-// logger.level = 'silly';
-// logger.log('silly', JSON.stringify({"foo":"bar"}));
-// logger.log('debug', "127.0.0.1 - there's no place like home");
-// logger.log('verbose', "127.0.0.1 - there's no place like home");
-// logger.log('info', "127.0.0.1 - there's no place like home");
-// logger.log('warn', "127.0.0.1 - there's no place like home");
-// logger.log('error', "127.0.0.1 - there's no place like home");
-// logger.info("127.0.0.1 - there's no place like home");
-// logger.warn("127.0.0.1 - there's no place like home");
-// logger.error("127.0.0.1 - there's no place like home");

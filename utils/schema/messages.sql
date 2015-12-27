@@ -19,8 +19,8 @@ create table "message_statuses" (
 );
 
 /* message statuses table */
-create table "message_attributes" (
-  "message_id" bigint not null references messages(id),
-  "likes" bigint default 0,
-  "hates" bigint default 0
-);
+/* create table "message_attributes" ( */
+/*   "message_id" bigint not null references messages(id), */
+/*   "likes" bigint default 0, */
+/*   "hates" bigint default 0 */
+/* ); */
