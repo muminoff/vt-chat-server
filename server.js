@@ -26,6 +26,7 @@ var port = process.env.PORT || config.port;
 // api import
 var signupUser = require('./api/signup');
 var authenticateUser = require('./api/authenticate');
+var getUserTopicList = require('./api/usertopiclist');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
@@ -110,6 +111,11 @@ pg.connect(pgConnectionString, function(err, client, done) {
           logger.error('Invalid token', token);
           socket.emit('signing_response', {status: 'fail', detail: 'invalid token'});
         }
+      });
+
+      //get subscribed topic list from db
+      getUserTopicList(client, user_id, logger, function(topiclist) {
+
       });
 
     });

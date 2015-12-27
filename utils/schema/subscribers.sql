@@ -6,18 +6,8 @@ create table "subscribers" (
   "moderator" bool default false
 );
 
-/* create or replace function subscribe_to_all_topics() returns trigger as declare */
-/* this_user record; */
-/* $body$ */
-/* begin */
-/*   insert into subscribers(topic_id, "user_id") */
-/*   values(new.id, this_user_id); */
-/*   return new; */
-/* end; */
-/* $body$ */
-/* language plpgsql; */
-
-CREATE FUNCTION subscribe_all() RETURNS trigger AS $$
+/* on topic create subscibe all function */
+CREATE FUNCTION on_topic_create_subscribe_all() RETURNS trigger AS $$
 DECLARE
 this_user RECORD;
 BEGIN
@@ -32,7 +22,28 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-create trigger trig_subscribe_all
+create trigger trig_on_topic_create_subscribe_all
   after insert on topics
   for each row
-  execute procedure subscribe_all();
+  execute procedure on_topic_create_subscribe_all();
+
+/* on user create subscibe all function */
+CREATE FUNCTION on_user_create_subscribe_all() RETURNS trigger AS $$
+DECLARE
+this_topic RECORD;
+BEGIN
+
+  FOR this_topic IN SELECT id FROM topics LOOP
+    RAISE NOTICE 'Subscriber function executing for user %...', this_user.id;
+    insert into subscribers (topic_id, "user_id") values(this_topic.id, new.id);
+  END LOOP;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+
+
+create trigger trig_on_user_create_subscribe_all
+  after insert on users
+  for each row
+  execute procedure on_user_create_subscribe_all();

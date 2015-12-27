@@ -10,6 +10,3 @@ create table "topics" (
   "attrs" jsonb,
   "created_at" timestamp without time zone default (now() at time zone 'utc')
 );
-
-/* topics table index */
-create index active_topics on topics (id) where archived is not true;
