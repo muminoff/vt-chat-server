@@ -34,7 +34,7 @@ this_topic RECORD;
 BEGIN
 
   FOR this_topic IN SELECT id FROM topics LOOP
-    RAISE NOTICE 'Subscriber function executing for user %...', this_user.id;
+    RAISE NOTICE 'Subscriber function executing for topic %...', this_topic.id;
     insert into subscribers (topic_id, "user_id") values(this_topic.id, new.id);
   END LOOP;
 
