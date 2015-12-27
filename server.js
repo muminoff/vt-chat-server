@@ -26,7 +26,7 @@ var port = process.env.PORT || config.port;
 // api import
 var signupUser = require('./api/signup');
 var authenticateUser = require('./api/authenticate');
-// var getUserTopicList = require('./api/usertopiclist');
+var userTopicList = require('./api/usertopiclist');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
@@ -107,16 +107,30 @@ pg.connect(pgConnectionString, function(err, client, done) {
           socket.user_id = user.id;
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
+
+          //get subscribed topic list from db
+          userTopicList(client, socket.user_id, logger, function(topiclist) {
+            logger.debug('Got topic list from API', topiclist);
+            socket.topiclist = topiclist;
+
+            logger.info('User', socket.user_id, 'has', socket.topiclist.length, 'topics');
+
+            // handle listeners for these topics
+            for (var i = 0; i < socket.topiclist.length; i++) {
+              logger.debug('Listener for topic ->', socket.topiclist[i].id, 'started');
+              socket.on('topic_' + socket.topiclist[i].id, function(data) {
+                logger.info('Message came from topic', socket.topiclist[i].id, 'with data', data);
+                socket.emit('topic_' + socket.topiclist[i].id, data);
+              });
+            }
+
+          });
+
         } else {
           logger.error('Invalid token', token);
           socket.emit('signing_response', {status: 'fail', detail: 'invalid token'});
         }
       });
-
-      //get subscribed topic list from db
-      // getUserTopicList(client, user_id, logger, function(topiclist) {
-
-      // });
 
     });
 

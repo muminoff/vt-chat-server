@@ -15,7 +15,7 @@ var logger = module.exports = new (winston.Logger)({
       }
     }),
     new (winston.transports.Console)({
-      colorize: 'all'
+      colorize: 'all',
     }),
   ]
 });
