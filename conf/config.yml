@@ -1,6 +1,6 @@
 ---
-  hostname: "localhost"
-  port: 3000
+  host: "localhost"
+  port: 6001
   domain: "drivers.uz"
   log_file: "logs/vt.log"
   log_level: "debug" #info, warn, error
