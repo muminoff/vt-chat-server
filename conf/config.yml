@@ -4,6 +4,7 @@
   domain: "drivers.uz"
   log_file: "logs/vt.log"
   log_level: "debug" #info, warn, error
+  gcm_api_key: "gcm_api_key"
   postgresql: 
     host: "localhost"
     port: 5432
