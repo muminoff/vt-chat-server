@@ -21,6 +21,7 @@ var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + p
 // rest api stuff
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
 
 // api import
@@ -265,6 +266,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
 });
 
-server.listen(port, function () {
-  logger.info('Server listening at port %d', port);
+server.listen(port, host, function () {
+  logger.info('Server listening at port %s:%d', host, port);
 });
