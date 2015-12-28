@@ -28,6 +28,7 @@
     "body-parser": "^1.14.2",
     "express": "^4.13.3",
     "js-yaml": "^3.4.6",
+    "node-gcm": "^0.13.0",
     "pg": "^4.4.3",
     "pg-hstore": "^2.3.2",
     "sequelize": "^3.15.0",

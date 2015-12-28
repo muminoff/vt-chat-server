@@ -64,8 +64,6 @@ router.post('/signup', function(req, res) {
       return res.json(token);
     });
 
-    // res.json({ status: 'ok' });
-
   });
 });
 
@@ -112,7 +110,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
         } else {
           logger.error('Invalid token', token);
-          socket.emit('signing_response', {status: 'fail', detail: 'invalid token'});
+          socket.emit('signin_response', {status: 'fail', detail: 'invalid token'});
         }
       });
 
