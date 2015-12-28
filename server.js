@@ -38,7 +38,7 @@ redisClient.on('error', function(err) {
   process.exit(-1);
 });
 redisClient.select(config.redis.db);
-if(config.redis.auth)redisClient.auth(condig.redis.auth);
+if(config.redis.auth)redisClient.auth(config.redis.auth);
 logger.info('Connected to Redis');
 
 // rest api stuff
