@@ -3,6 +3,7 @@ create table users (
   "id" bigserial primary key,
   "username" character varying(16) not null unique,
   "phone_number" character varying(15) not null unique,
+  "gcm_token" text not null,
   "roles" jsonb,
   "profile" jsonb,
   "vt" jsonb,

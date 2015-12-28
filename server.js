@@ -46,6 +46,11 @@ router.post('/signup', function(req, res) {
 
   var username = req.body.username;
   var phone_number = req.body.phone_number;
+  var gcm_token = req.body.gcm_token;
+
+  logger.debug('username', username);
+  logger.debug('phone_number', phone_number);
+  logger.debug('gcm_token', gcm_token);
 
   if(!username) {
     return res.json({ status: 'fail', detail: 'username not given' });
@@ -57,7 +62,7 @@ router.post('/signup', function(req, res) {
 
   pg.connect(pgConnectionString, function(err, client, done) {
 
-    signupUser(client, username, phone_number, logger, function(token) {
+    signupUser(client, username, phone_number, gcm_token, logger, function(token) {
       logger.debug('Got token from API', token);
       logger.info('User', username, 'signed up');
       logger.info('Token', token);
@@ -265,5 +270,5 @@ pg.connect(pgConnectionString, function(err, client, done) {
 });
 
 server.listen(port, host, function () {
-  logger.info('Server listening at port %s:%d', host, port);
+  logger.info('Server listening at %s:%d', host, port);
 });
