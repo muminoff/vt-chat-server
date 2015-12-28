@@ -5,10 +5,17 @@ var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var pg = require('pg');
+var redis = require('redis');
 
 // logger and config
 var logger = require('./logger');
 var config = require('./utils/config');
+
+// set log level from config
+logger.level = config.log_level;
+
+// db pool size
+pg.defaults.poolSize = config.postgresql.pool_size;
 
 // variables
 var pgUsername = config.postgresql.user;
@@ -17,12 +24,26 @@ var pgHostname = config.postgresql.host;
 var pgPort = config.postgresql.port;
 var pgDBName = config.postgresql.name;
 var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
+var host = process.env.HOST || config.host;
+var port = process.env.PORT || config.port;
+
+// redis client instance
+var redisClient = redis.createClient({
+  host: config.redis.host,
+  port: config.redis.port,
+});
+redisClient.on('error', function(err) {
+  logger.error('Cannot connect to Redis');
+  logger.error(err);
+  process.exit(-1);
+});
+redisClient.select(config.redis.db);
+if(config.redis.auth)redisClient.auth(condig.redis.auth);
+logger.info('Connected to Redis');
 
 // rest api stuff
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-var host = process.env.HOST || config.host;
-var port = process.env.PORT || config.port;
 
 // api import
 var signupUser = require('./api/signup');
@@ -32,12 +53,6 @@ var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
-
-// set log level from config
-logger.level = config.log_level;
-
-// db pool size
-pg.defaults.poolSize = config.postgresql.pool_size;
 
 // rest route
 var router = express.Router();
@@ -260,7 +275,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
     // Client disconnected 
     socket.on('disconnect', function(){
       logger.info('Client disconnected', socket.id);
-      logger.info('Client user_id was', socket.user_id);
+      if(typeof(socket.user_id) !== 'undefined')
+        logger.info('Client user_id was', socket.user_id);
       delete socket;
       logger.warn('Socket destroyed', socket.id);
     });
