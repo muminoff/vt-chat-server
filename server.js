@@ -270,19 +270,28 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
-        logger.debug('Attempt to send GCM push to', socket.user_id);
 
         // TODO:
         // get offline users' gcm_tokens
         // but below line gets all gcm tokens from db
-        var gcm_tokens = client.query('SELECT gcm_token FROM users');
-        gcm_tokens.on('result', function(result) {
-          logger.info("GCM_TOKENS ====>", result.rows);
-          // gcmSendPush(gcm_api_key, gcm_tokens, msg, logger, function(result) {
-          //   logger.debug('gcm send push result ->', result);
-          // });
-        });
+        // client.query('SELECT gcm_token FROM users', [], function(err, result) {
+        //   if(err)logger.error(err);
+        //   if(result) {
+        //     var gcm_tokens_raw = result.rows;
+        //     var gcm_tokens = [];
+        //     for (var i = 0; i < gcm_tokens_raw.length; i++) {
+	//       gcm_tokens.push(result.rows[i].gcm_token);
+        //     }
+        //     logger.debug("tokens ->", gcm_tokens);
+        //     logger.debug('Attempt to send GCM push to all users in db');
+        //     gcmSendPush(gcm_api_key, gcm_tokens, msg, logger, function(resp) {
+        //       logger.debug('GCM push sender response ->', resp);
+        //     });
+        //   }
+        // });
+
       });
+
 
     });
 
