@@ -7,8 +7,8 @@ var io = require('socket.io')(server);
 var pg = require('pg');
 var redis = require('redis');
 
-// functional programming
-// fast ma
+// funktionale programminghe stuffhe
+// ay lob konkyurent kompyuting
 var __ = require('lazy.js');
 
 // logger and config
