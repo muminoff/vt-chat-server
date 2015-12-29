@@ -245,9 +245,14 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
         // Broadcast topic event to all including this socket
         io.emit('topic_events', {'event_type': 'created', 'object': resp});
+        var all_connected_clients = io.sockets.clients();
       });
 
     });
+
+    setInterval(function() {
+      logger.debug('Live sockets: ', io.sockets.sockets.length, Object.keys(io.engine.clients));
+    }, 5000);
 
     // topic message api
     socket.on('topic_message', function(data) {
