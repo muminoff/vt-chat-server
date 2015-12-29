@@ -290,7 +290,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
-        socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
+        // socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
 
         // TODO:
         // get offline users' gcm_tokens
