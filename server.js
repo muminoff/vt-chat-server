@@ -270,7 +270,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
-        logger.debug('Attempt to send GCM push to, socket.user_id);
+        logger.debug('Attempt to send GCM push to', socket.user_id);
         gcmSendPush(client, gcm_api_key, msg, logger, function(result) {
           logger.debug('gcm send push result ->', result);
         });

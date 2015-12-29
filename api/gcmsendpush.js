@@ -10,7 +10,7 @@ var gcmSendPush = module.exports = function(client, gcm_api_key, message, logger
     message.addNotification('body', message.body);
 
 
-    var regTokens = ['APA91bEMKwnXyx0maS0Vg4AfFhUbL-DVurklEr4-JHUvhcGzXzueQ1aSnBto1RGbW9uZv-BWVnDOn8-1bfAY0C5XCPoRfPgjYjUhqS-iAwFaS5PEm9Ki9S3DjgBFhPIOQBIFMp6CSBOA'];
+    var regTokens = ['APA91bEt49iUfKHkqdTu6YXdCs-jazPLowlDAwCmFZk9qV9gZ-bUHzicirQoojVvIiQwyc58aSdtHZXXAsLFcCbNkL9W7abGcbEYGpiGwefsdaZZjq-eLru23QPtN0g9ogZ7CDE4AIz0'];
 
     var sender = new gcm.Sender(gcm_api_key);
 
