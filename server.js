@@ -265,7 +265,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       var topic_id = data.topic_id;
       var body = data.body;
-      if(typeof(data.reply_to === 'undefined') {
+      if(typeof(data.reply_to) === 'undefined') {
         var reply_to = null;
       } else {
         var reply_to = data.reply_to;
