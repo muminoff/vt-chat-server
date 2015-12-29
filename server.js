@@ -7,6 +7,10 @@ var io = require('socket.io')(server);
 var pg = require('pg');
 var redis = require('redis');
 
+// functional programming
+// fast ma
+var __ = require('lazy.js');
+
 // logger and config
 var logger = require('./logger');
 var config = require('./utils/config');
@@ -23,7 +27,8 @@ var pgPassword = config.postgresql.pass;
 var pgHostname = config.postgresql.host;
 var pgPort = config.postgresql.port;
 var pgDBName = config.postgresql.name;
-var pgConnectionString = 'postgres://' + pgUsername + ':' + pgPassword + '@' + pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
+var pgConnectionString = 
+  'postgres://' + pgUsername + ':' + pgPassword + '@'+ pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
 var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
 
@@ -47,8 +52,8 @@ app.use(bodyParser.json());
 
 // api import
 var signupUser = require('./api/signup');
-var authenticateUser = require('./api/authenticate');
-var userTopicList = require('./api/usertopiclist');
+var signinUser = require('./api/signin');
+var userTopics = require('./api/usertopics');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
@@ -121,17 +126,30 @@ pg.connect(pgConnectionString, function(err, client, done) {
       }
 
       logger.debug('Token ' + token + ' received from socket', socket.id);
-      authenticateUser(client, token, logger, function(user) {
+      signinUser(client, token, logger, function(user) {
+
         if(user && 'id' in user) {
           socket.auth = true;
           socket.user_id = user.id;
+          socket.user_topics = [];
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
+
+          logger.debug('Getting subscribed topics of user', socket.user_id, '...');
+          userTopics(client, socket.user_id, logger, function(topics) {
+            logger.info('Got response from API', topics);
+            for (var i = 0; i < topics.length; i++) {
+              var topicid = topics[i].topic_id;
+              socket.join('topic' + topicid);
+              logger.debug('User', socket.user_id, 'has now joined to topic', topicid);
+            }
+          });
 
         } else {
           logger.error('Invalid token', token);
           socket.emit('signin_response', {status: 'fail', detail: 'invalid token'});
         }
+
       });
 
     });
@@ -143,42 +161,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.disconnect();
       }
     }, 60000);
-
-    setTimeout(function() {
-      //get subscribed topic list from db
-      userTopicList(client, socket.user_id, logger, function(topiclist) {
-        logger.debug('Got topic list from API', topiclist);
-        socket.topiclist = topiclist;
-
-        logger.info('User', socket.user_id, 'has', socket.topiclist.length, 'topics');
-
-        // handle listeners for these topics
-        for (var i = 0; i < socket.topiclist.length; i++) {
-
-          var topicid = socket.topiclist[i].id;
-          logger.debug('Listener for topic ->', topicid, 'started');
-
-          socket.on('topic_' + topicid, function(data) {
-
-            var message_topic_id = data.topic_id;
-            var message_body = data.body;
-            var message_reply_to = data.reply_to;
-            logger.debug('Got reply_to', message_reply_to, typeof message_reply_to);
-
-            logger.info('Message came from topic', topicid, 'with data', data);
-            logger.debug('Saving message to DB');
-
-            messageSave(client, message_topic_id, socket.user_id, message_reply_to, message_body, logger, function(msg) {
-              logger.debug('Got msg from API', msg);
-              io.emit('topic_' + topicid, msg);
-            });
-          });
-
-        }
-
-      });
-    }, 2000);
-
 
     // roomlist api
     socket.on('roomlist_request', function() {
@@ -258,6 +240,34 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
         // Broadcast topic event to all including this socket
         io.emit('topic_events', {'event_type': 'created', 'object': resp});
+      });
+
+    });
+
+    // topic message api
+    socket.on('topic_message', function(data) {
+
+      // if socket not authenticated
+      if(!socket.auth) {
+        return socket.emit('topic_message', {'status': 'fail', 'detail': 'not authenticated'});
+      }
+
+      try {
+        var topic_id = data.topic_id;
+        var body = data.body;
+        var reply_to = data.reply_to;
+      } catch (err) {
+        return socket.emit('topic_message', {'status': 'fail', 'detail': 'cannot parse data, please, include, topic_id, body and reply_to only, nothing else'});
+      }
+
+      logger.info('Message came from topic', topic_id, 'with data', data);
+      logger.debug('Saving message to DB');
+
+      messageSave(client, topic_id, socket.user_id, body, reply_to, logger, function(msg) {
+        logger.debug('Got msg from API', msg);
+        logger.debug('Broadcasting message through topic', topic_id);
+        io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+        socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
       });
 
     });

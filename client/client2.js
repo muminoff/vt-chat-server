@@ -9,6 +9,9 @@ socket.on('connect', function(){
   setTimeout(function() {
     socket.emit('topiclist_request', { room_id: 1 });
   }, 2000);
+  setTimeout(function() {
+    socket.emit('topic_message', { foo: 'bar' });
+  }, 2000);
 });
 socket.on('signin_response', function(data){
   console.log(data);
