@@ -2,15 +2,14 @@ var gcm = require('node-gcm');
 
 var gcmSendPush = module.exports = function(client, gcm_api_key, message, logger, callback) {
 
+    logger.debug('Using gcm_api_key', gcm_api_key);
+
     var message = new gcm.Message();
 
-    message.addData(message.topic_id, message.body);
-    message.addNotification('title', message.topic_id);
-    message.addNotification('icon', 'ic_launcher');
-    message.addNotification('body', message.body);
+    message.addData('msg', 'bironnima');
 
 
-    var regTokens = ['APA91bEt49iUfKHkqdTu6YXdCs-jazPLowlDAwCmFZk9qV9gZ-bUHzicirQoojVvIiQwyc58aSdtHZXXAsLFcCbNkL9W7abGcbEYGpiGwefsdaZZjq-eLru23QPtN0g9ogZ7CDE4AIz0'];
+    var regTokens = ['APA91bHL8Tjau4Ex4oJeO9r3kgFSwAPdy4AS8qHPXqj7sUkb-KwfinLV-HhA7b-35IKlBkdDA082DJytMDG19-Y1ONXfTwhqX-hSawOGMw6Lr5weuy0TOfmY_Da2yWnTT7nv_iLnB2Ig'];
 
     var sender = new gcm.Sender(gcm_api_key);
 
