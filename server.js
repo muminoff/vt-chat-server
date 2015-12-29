@@ -304,16 +304,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
-    client.query('LISTEN topic_event', function(err, result) {
-      logger.info("Listen started for topic_event");
-    });
-
-    // Topic created events
-    client.on('notification', function(data) {
-      logger.info('DB event fired', data);
-      socket.emit('topic_events', data.payload);
-    });
-
     // Client disconnected 
     socket.on('disconnect', function(){
       logger.info('Client disconnected', socket.id);
