@@ -1,7 +1,7 @@
 ---
   host: "localhost"
   port: 6001
-  domain: "drivers.uz"
+  domain: "chat.drivers.uz"
   log_file: "logs/vt.log"
   log_level: "debug" #info, warn, error
   gcm_api_key: "AIzaSyBBaV6nqZtFaQnKzRNK9i_g-jcBU77ji00"
