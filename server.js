@@ -250,9 +250,9 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
-    setInterval(function() {
-      logger.debug('Live sockets: ', io.sockets.sockets.length, Object.keys(io.engine.clients));
-    }, 5000);
+    // setInterval(function() {
+    //   logger.debug('Live sockets: ', io.sockets.sockets.length, Object.keys(io.engine.clients));
+    // }, 5000);
 
     // topic message api
     socket.on('topic_message', function(data) {
@@ -263,12 +263,12 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.disconnect();
       }
 
-      try {
-        var topic_id = data.topic_id;
-        var body = data.body;
+      var topic_id = data.topic_id;
+      var body = data.body;
+      if(typeof(data.reply_to === 'undefined') {
+        var reply_to = null;
+      } else {
         var reply_to = data.reply_to;
-      } catch (err) {
-        return socket.emit('topic_message', {'status': 'fail', 'detail': 'cannot parse data, please, include, topic_id, body and reply_to only, nothing else'});
       }
 
       logger.info('Message came from topic', topic_id, 'with data', data);
@@ -300,7 +300,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
         // });
 
       });
-
 
     });
 
