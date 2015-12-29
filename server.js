@@ -263,21 +263,34 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.disconnect();
       }
 
+      if(typeof(data.stamp_id) === 'undefined') {
+        var stamp_id = null;
+      } else {
+        var stamp_id = data.stamp_id;
+      }
+
       var topic_id = data.topic_id;
       var body = data.body;
+
       if(typeof(data.reply_to) === 'undefined') {
         var reply_to = null;
       } else {
         var reply_to = data.reply_to;
       }
 
+      if(typeof(data.attrs) === 'undefined') {
+        var attrs = null;
+      } else {
+        var attrs = data.attrs;
+      }
+
       logger.info('Message came from topic', topic_id, 'with data', data);
       logger.debug('Saving message to DB');
 
-      messageSave(client, topic_id, socket.user_id, body, reply_to, logger, function(msg) {
+      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, logger, function(msg) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
-        io.sockets.to('topic' + topic_id).emit('topic_message', msg);
+        io.sockets.in('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
 
         // TODO:
