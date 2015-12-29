@@ -4,7 +4,7 @@ var message = new gcm.Message();
 
 message.addData('key1', 'msg1');
 
-var regTokens = ['APA91bHL8Tjau4Ex4oJeO9r3kgFSwAPdy4AS8qHPXqj7sUkb-KwfinLV-HhA7b-35IKlBkdDA082DJytMDG19-Y1ONXfTwhqX-hSawOGMw6Lr5weuy0TOfmY_Da2yWnTT7nv_iLnB2Ig'];
+var regTokens = ['APA91bHS3vcWjB4jAZ-1R-urKsDTh1g0cl2EfA5LcIwOsPjZyf-YrcDrPCypmA9AyBK715kwk821jkXNfeNeKQpiuB9TheBgLfAS2mi8hLDIiVnr5xRmKP0bZ3Nshh2OFYsg0Zt3fGxM'];
 
 // Set up the sender with you API key
 var sender = new gcm.Sender('AIzaSyBBaV6nqZtFaQnKzRNK9i_g-jcBU77ji00');
