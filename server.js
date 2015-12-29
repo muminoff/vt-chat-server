@@ -31,6 +31,7 @@ var pgConnectionString =
   'postgres://' + pgUsername + ':' + pgPassword + '@'+ pgHostname + ':' + pgPort.toString() + '/' + pgDBName;
 var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
+var gcm_api_key = process.env.GCM_API_KEY || config.gcm_api_key;
 
 // redis client instance
 var redisClient = redis.createClient({
@@ -58,6 +59,7 @@ var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
+var gcmSendPush = require('./api/gcmsendpush');
 
 // rest route
 var router = express.Router();
@@ -268,6 +270,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
+        logger.debug('Attempt to send GCM push to, socket.user_id);
+        gcmSendPush(client, gcm_api_key, msg, logger, function(result) {
+          logger.debug('gcm send push result ->', result);
+        });
       });
 
     });
