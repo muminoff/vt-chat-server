@@ -170,7 +170,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
       // if socket not authenticated
       if(!socket.auth) {
         logger.error('Not authenticated socket', socket.id);
-        return socket.emit('roomlist_response', {status: 'fail', detail: 'not authenticated'});
+        socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
+        socket.disconnect();
       }
 
       logger.info('User ' + socket.user_id + ' asks for room list');
@@ -189,7 +190,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
       // if socket not authenticated
       if(!socket.auth) {
         logger.error('Not authenticated socket', socket.id);
-        return socket.emit('roomlist_response', {status: 'fail', detail: 'not authenticated'});
+        socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
+        socket.disconnect();
       }
 
       logger.debug('User ' + socket.user_id + ' asks for topic list');
@@ -216,7 +218,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       // if socket not authenticated
       if(!socket.auth) {
-        return socket.emit('topiccreate_response', {'status': 'fail', 'detail': 'not authenticated'});
+        socket.emit('topiccreate_response', {'status': 'fail', 'detail': 'not-authenticated'});
+        socket.disconnect();
       }
 
       logger.info('User ' + socket.user_id + ' asks for topic create');
@@ -251,7 +254,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       // if socket not authenticated
       if(!socket.auth) {
-        return socket.emit('topic_message', {'status': 'fail', 'detail': 'not authenticated'});
+        socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
+        socket.disconnect();
       }
 
       try {
