@@ -268,7 +268,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
       messageSave(client, topic_id, socket.user_id, body, reply_to, logger, function(msg) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
-        io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+        io.sockets.to('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
 
         // TODO:
