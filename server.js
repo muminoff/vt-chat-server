@@ -271,8 +271,16 @@ pg.connect(pgConnectionString, function(err, client, done) {
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
         socket.emit('topic_message', { status: 'ok', message: { id: msg.id } });
         logger.debug('Attempt to send GCM push to', socket.user_id);
-        gcmSendPush(client, gcm_api_key, msg, logger, function(result) {
-          logger.debug('gcm send push result ->', result);
+
+        // TODO:
+        // get offline users' gcm_tokens
+        // but below line gets all gcm tokens from db
+        var gcm_tokens = client.query('SELECT gcm_token FROM users');
+        gcm_tokens.on('result', function(result) {
+          logger.info("GCM_TOKENS ====>", result.rows);
+          // gcmSendPush(gcm_api_key, gcm_tokens, msg, logger, function(result) {
+          //   logger.debug('gcm send push result ->', result);
+          // });
         });
       });
 
