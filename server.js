@@ -8,7 +8,7 @@ var pg = require('pg');
 var redis = require('redis');
 
 // funktionale programminghe stuffhe
-// ay lob konkyurent kompyuting
+// ay lob konkyurent kompyuting mazapaka
 var __ = require('lazy.js');
 
 // logger and config
@@ -304,6 +304,32 @@ pg.connect(pgConnectionString, function(err, client, done) {
       logger.warn('Socket destroyed', socket.id);
     });
 
+  });
+
+  client.query('LISTEN message_events', function(err, result) {
+    if(err)logger.error('Cannot listen to message_event');
+    logger.info('Listener started for message_events');
+  });
+
+  client.query('LISTEN topic_events', function(err, result) {
+    if(err)logger.error('Cannot listen to topic_events');
+    logger.info('Listener started for topic_events');
+  });
+
+  client.on('notification', function(data) {
+    switch (data.channel) {
+    case 'topic_events':
+      logger.info('New topic event fired, pid %d', data.processId);
+      io.emit('topic_events', {'event_type': 'created', 'object': data.payload});
+      // TODO:
+      // broadcast data.payload to offline users via gcm push
+      break;
+    case 'message_events':
+      logger.info('New message event fired, pid %d', data.processId);
+      break;
+    default:
+      logger.warn('Some event fired in DB');
+    }
   });
 
 });
