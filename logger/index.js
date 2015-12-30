@@ -4,7 +4,7 @@ var config = require('../utils/config');
 var logger = module.exports = new (winston.Logger)({
   transports: [
     // new (winston.transports.File)({
-    //   filename: './logs/vt.log',
+    //   filename: config.log_file,
     //   json: false,
     //   timestamp: function() {
     //     return Date();

@@ -40,12 +40,13 @@ var redisClient = redis.createClient({
 });
 redisClient.on('error', function(err) {
   logger.error('Cannot connect to Redis');
-  logger.error(err);
   process.exit(-1);
 });
 redisClient.select(config.redis.db);
 if(config.redis.auth)redisClient.auth(config.redis.auth);
-logger.info('Connected to Redis');
+redisClient.on('connect', function() {
+  logger.info('Connected to Redis');
+});
 
 // rest api stuff
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -101,12 +102,12 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
   // on database connection failure
   if(err){
-    logger.error('Cannot connect to DB');
+    logger.error('Cannot connect to PostgreSQL');
     logger.error(err);
     process.exit(-1);
   }
 
-  logger.info('Connected to DB');
+  logger.info('Connected to PostgreSQL');
 
   // on socket connection
   io.sockets.on('connection', function (socket) {
