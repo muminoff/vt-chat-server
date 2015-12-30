@@ -61,7 +61,10 @@ var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
-var gcmSendPush = require('./api/gcmsendpush');
+var topicUnsubscribe = require('./api/topicunsubscribe');
+
+// workers import
+var gcmPushSender = require('./workers/gcmpushsender.js');
 
 // rest route
 var router = express.Router();
@@ -304,6 +307,42 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+      });
+
+    });
+
+    // topic unsubscribe api
+    socket.on('topicunsubscribe_request', function(data) {
+
+      // if socket not authenticated
+      if(!socket.auth) {
+        socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+        socket.disconnect();
+        return;
+      }
+
+      logger.info('User ' + socket.user_id + ' asks for topic unsubscribe');
+
+      // if topic id not given
+      if(typeof(data.topic_id) === 'undefined') {
+        socket.emit('topicunsubscribe_response', {status: 'fail', detail: 'topic_id not given'});
+      }
+
+      var topic_id = data.topic_id;
+
+      // unsubscribe user from topic and send response
+      topicUnsubscribe(client, socket.user_id, topic_id, logger, function(success){
+
+        logger.debug('Sending ->', resp);
+
+        if(success) {
+          socket.emit('topicunsubscribe_response', { status: 'ok', topic_id: topic_id, user: { id: socket.user_id }});
+        } else {
+          socket.emit('topicunsubscribe_response', { status: 'fail' });
+        }
+
+        // Broadcast topic event to all including this socket
+        io.emit('topic_events', { event_type: 'unsubscribed', topic_id: topic_id, user: { id: socket.user_id } });
       });
 
     });
