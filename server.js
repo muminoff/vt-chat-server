@@ -172,6 +172,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.error('Not authenticated socket', socket.id);
         socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
         socket.disconnect();
+        return;
       }
 
       logger.info('User ' + socket.user_id + ' asks for room list');
@@ -192,6 +193,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.error('Not authenticated socket', socket.id);
         socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
         socket.disconnect();
+        return;
       }
 
       logger.debug('User ' + socket.user_id + ' asks for topic list');
@@ -220,6 +222,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
       if(!socket.auth) {
         socket.emit('topiccreate_response', {'status': 'fail', 'detail': 'not-authenticated'});
         socket.disconnect();
+        return;
       }
 
       logger.info('User ' + socket.user_id + ' asks for topic create');
@@ -249,10 +252,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
-    // setInterval(function() {
-    //   logger.debug('Live sockets: ', io.sockets.sockets.length, Object.keys(io.engine.clients));
-    // }, 5000);
-
     // topic message api
     socket.on('topic_message', function(data) {
 
@@ -260,6 +259,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
       if(!socket.auth) {
         socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
         socket.disconnect();
+        return;
       }
 
       if(typeof(data.stamp_id) === 'undefined') {

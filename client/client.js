@@ -2,7 +2,7 @@
 var socket = require('socket.io-client')('http://localhost:6001');
 socket.on('connect', function(){
   console.log('Connected to socket.io server');
-  socket.emit('signin_request', {'token': 'ec2aef4bc65e4c66b78c57803ed1a468'});
+  socket.emit('signin_request', {'token': '8c47ee672b6c4826af44494af3fefe09'});
   setTimeout(function() {
     socket.emit('roomlist_request');
   }, 1000);
