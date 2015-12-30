@@ -53,6 +53,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // api import
+var getAllTopics = require('./api/alltopics.js');
 var signupUser = require('./api/signup');
 var signinUser = require('./api/signin');
 var userTopics = require('./api/usertopics');
@@ -109,6 +110,11 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
   logger.info('Connected to PostgreSQL');
 
+  // get all topics
+  getAllTopics(client, logger, function(topics) {
+    logger.info('Got all topics =>', JSON.stringify(topics));
+  });
+
   // on socket connection
   io.sockets.on('connection', function (socket) {
 
@@ -134,17 +140,24 @@ pg.connect(pgConnectionString, function(err, client, done) {
         if(user && 'id' in user) {
           socket.auth = true;
           socket.user_id = user.id;
-          socket.user_topics = [];
+          socket.username = user.username;
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
 
-          logger.debug('Getting subscribed topics of user', socket.user_id, '...');
+          logger.debug('Getting subscribed topics of user', socket.username, '...');
           userTopics(client, socket.user_id, logger, function(topics) {
             logger.info('Got response from API', topics);
             for (var i = 0; i < topics.length; i++) {
+              
+              // get topic id
               var topicid = topics[i].topic_id;
+
+              // join user to topic
               socket.join('topic' + topicid);
-              logger.debug('User', socket.user_id, 'has now joined to topic', topicid);
+              logger.debug('User', socket.username, 'has now joined to topic', topicid);
+
+              // remove user_id from offline users
+              redisClient.srem('topic' + topicid, socket.user_id);
             }
           });
 
