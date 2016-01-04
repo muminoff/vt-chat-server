@@ -89,10 +89,11 @@ router.post('/signup', function(req, res) {
 
   pg.connect(pgConnectionString, function(err, client, done) {
 
-    signupUser(client, username, phone_number, gcm_token, logger, function(token) {
-      logger.debug('Got token from API', token);
+    signupUser(client, username, phone_number, gcm_token, logger, function(resp) {
+      logger.debug('Got response from API', resp);
       logger.info('User', username, 'signed up');
-      logger.info('Token', token);
+      logger.info('User ID', resp.user_id);
+      logger.info('Token', resp.token);
       return res.json(token);
     });
 
