@@ -5,7 +5,7 @@ var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var pg = require('pg');
-var redis = require('redis');
+// var redis = require('redis');
 
 // funktionale programminghe stuffhe
 // ay lob konkyurent kompyuting mazapaka
@@ -33,20 +33,20 @@ var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
 var gcm_api_key = process.env.GCM_API_KEY || config.gcm_api_key;
 
-// redis client instance
-var redisClient = redis.createClient({
-  host: config.redis.host,
-  port: config.redis.port,
-});
-redisClient.on('error', function(err) {
-  logger.error('Cannot connect to Redis');
-  process.exit(-1);
-});
-redisClient.select(config.redis.db);
-if(config.redis.auth)redisClient.auth(config.redis.auth);
-redisClient.on('connect', function() {
-  logger.info('Connected to Redis');
-});
+// // redis client instance
+// var redisClient = redis.createClient({
+//   host: config.redis.host,
+//   port: config.redis.port,
+// });
+// redisClient.on('error', function(err) {
+//   logger.error('Cannot connect to Redis');
+//   process.exit(-1);
+// });
+// redisClient.select(config.redis.db);
+// if(config.redis.auth)redisClient.auth(config.redis.auth);
+// redisClient.on('connect', function() {
+//   logger.info('Connected to Redis');
+// });
 
 // rest api stuff
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -161,7 +161,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
               logger.debug('User', socket.username, 'has now joined to topic', topicid);
 
               // remove user_id from offline users
-              redisClient.srem('topic' + topicid, socket.user_id);
+              // redisClient.srem('topic' + topicid, socket.user_id);
             }
           });
 
