@@ -94,7 +94,7 @@ router.post('/signup', function(req, res) {
       logger.info('User', username, 'signed up');
       logger.info('User ID', resp.user_id);
       logger.info('Token', resp.token);
-      return res.json(token);
+      return res.json(resp);
     });
 
   });
