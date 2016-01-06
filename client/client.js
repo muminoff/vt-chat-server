@@ -1,7 +1,9 @@
-var socket = require('socket.io-client')('http://chat.drivers.uz:3000');
+// var socket = require('socket.io-client')('http://chat.drivers.uz:3000');
+var socket = require('socket.io-client')('http://localhost:6001');
 socket.on('connect', function(){
   console.log('Connected to socket.io server');
-  socket.emit('signin_request', {'token': '7de6d9bc19e24d6bb6ef50cacc95e745'});
+  // socket.emit('signin_request', {'token': '7de6d9bc19e24d6bb6ef50cacc95e745'});
+  socket.emit('signin_request', {'token': '91a676ce85f8413a969758a5d9389c3f'});
   setTimeout(function() {
     socket.emit('roomlist_request');
   }, 1000);

@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 
 # Database and roles
-psql -U vt -c "drop database if exists vt"
-psql -U vt -c "drop role if exists vt"
-psql -U vt -c "create role vt with login password 'vt'"
-psql -U vt -c "create database vt owner vt encoding 'utf-8'"
-psql -U vt -c "grant all privileges on database vt to vt"
+# psql -U vt -c "drop database if exists vt"
+# psql -U vt -c "drop role if exists vt"
+# psql -U vt -c "create role vt with login password 'vt'"
+# psql -U vt -c "create database vt owner vt encoding 'utf-8'"
+# psql -U vt -c "grant all privileges on database vt to vt"
 
 # Extensions
 psql -U vt -d vt -c 'create extension "uuid-ossp"'
