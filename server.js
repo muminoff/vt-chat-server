@@ -59,6 +59,7 @@ var signinUser = require('./api/signin');
 var userTopics = require('./api/usertopics');
 var roomList = require('./api/roomlist');
 var topicList = require('./api/topiclist');
+var topicMembers = require('./api/topicmembers');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
 var topicUnsubscribe = require('./api/topicunsubscribe');
@@ -69,6 +70,7 @@ var gcmPushSender = require('./workers/gcmpushsender.js');
 // rest route
 var router = express.Router();
 
+// signup api
 router.post('/signup', function(req, res) {
 
   var username = req.body.username;
@@ -94,6 +96,28 @@ router.post('/signup', function(req, res) {
       logger.info('User', username, 'signed up');
       logger.info('User ID', resp.user_id);
       logger.info('Token', resp.token);
+      return res.json(resp);
+    });
+
+  });
+});
+
+// topic members api
+// TODO: check token before proceeding !!!
+router.post('/members', function(req, res) {
+
+  var topic_id = req.body.topic_id;
+
+  logger.debug('topic_id', topic_id);
+
+  if(!topic_id) {
+    return res.json({ status: 'fail', detail: 'topic_id not given' });
+  }
+
+  pg.connect(pgConnectionString, function(err, client, done) {
+
+    topicMembers(client, topic_id, logger, function(resp) {
+      logger.debug('Got response from API', resp);
       return res.json(resp);
     });
 
