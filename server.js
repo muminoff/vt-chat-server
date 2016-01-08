@@ -4,7 +4,7 @@ var app = express();
 var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
-var pg = require('pg');
+var pg = require('pg').native;
 // var redis = require('redis');
 
 // funktionale programminghe stuffhe
