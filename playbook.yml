@@ -14,59 +14,66 @@
     - name: Install other stuff
       yum: name={{ item }} state=present
       with_items:
-        - libffi-devel
-        - python-devel
-        - python-setuptools
         - postgresql94-devel
-        - libxslt-devel
         - zlib-devel
         - bzip2-devel
         - openssl-devel
-        - ncurses-devel
         - git
         - wget
+        - gcc-c++
+        - make
 
-    - git: repo=https://github.com/digsearch/digbot-webcrawler.git
-           dest=/home/ec2-user/webcrawler
+    - name: download node.js
+      shell: curl --silent --location https://rpm.nodesource.com/setup_4.x | bash -
+      register: cc
+    - debug: var=cc.stdout_lines
 
-    # Install Node.js last stable LTS version
+    - name: install node.js
+      yum: name={{ item }} state=present
+      with_items:
+        - nodejs
 
     # Copy source to
-    - copy: src=./vt-backend.tar.gz dest=/home/ec2-user/ owner=ec2-user group=ec2-user mode=0644
+    - copy: src=/Users/sardor/Projects/vt-chat-server/vt.tar.gz dest=/home/ec2-user/ owner=ec2-user group=ec2-user mode=0644
     
     - name: untar
-      shell: cd /home/ec2-user && tar xzvf vt-backend.tar.gz
+      shell: cd /home/ec2-user && tar xzvf vt.tar.gz
 
-    - name: show process running
-      shell: "ps aux|grep node|grep -v grep|wc -l"
-      register: ps
-    - debug: var=ps.stdout_lines
-
-    - name: show load
-      shell: uptime
-      register: uptime
-    - debug: var=uptime.stdout_lines
-
-    - name: clear log files
-      shell: rm /home/ec2-user/vt-backend/logs/*.log
-    
     - name: ls home
       shell: ls /home/ec2-user/ -lFXh
       register: ls
     - debug: var=ls.stdout_lines
 
-    - name: get os distro
-      shell: cat /etc/*release
-      register: cat
-    - debug: var=cat.stdout_lines
+    # - name: show process running
+    #   shell: "ps aux|grep node|grep -v grep|wc -l"
+    #   register: ps
+    # - debug: var=ps.stdout_lines
 
-    - name: get established connections
-      shell: "netstat -a | grep EST"
-      register: netstat
-    - debug: var=netstat.stdout_lines
+    # - name: show load
+    #   shell: uptime
+    #   register: uptime
+    # - debug: var=uptime.stdout_lines
 
-    - name: show cpu and mem load
-      # shell: "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{print 100 - $1\"%\"}'"
-      shell: "free -m && grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage \"%\"}'"
-      register: cpuload
-    - debug: var=cpuload.stdout_lines
+    # - name: clear log files
+    #   shell: rm /home/ec2-user/vt-backend/logs/*.log
+    
+    # - name: ls home
+    #   shell: ls /home/ec2-user/ -lFXh
+    #   register: ls
+    # - debug: var=ls.stdout_lines
+
+    # - name: get os distro
+    #   shell: cat /etc/*release
+    #   register: cat
+    # - debug: var=cat.stdout_lines
+
+    # - name: get established connections
+    #   shell: "netstat -a | grep EST"
+    #   register: netstat
+    # - debug: var=netstat.stdout_lines
+
+    # - name: show cpu and mem load
+    #   # shell: "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{print 100 - $1\"%\"}'"
+    #   shell: "free -m && grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage \"%\"}'"
+    #   register: cpuload
+    # - debug: var=cpuload.stdout_lines
