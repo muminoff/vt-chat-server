@@ -48,10 +48,6 @@ var gcm_api_key = process.env.GCM_API_KEY || config.gcm_api_key;
 //   logger.info('Connected to Redis');
 // });
 
-// rest api stuff
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
 // api import
 var getAllTopics = require('./api/alltopics.js');
 var signupUser = require('./api/signup');
@@ -66,65 +62,6 @@ var topicUnsubscribe = require('./api/topicunsubscribe');
 
 // workers import
 var gcmPushSender = require('./workers/gcmpushsender.js');
-
-// rest route
-var router = express.Router();
-
-// signup api
-router.post('/signup', function(req, res) {
-
-  var username = req.body.username;
-  var phone_number = req.body.phone_number;
-  var gcm_token = req.body.gcm_token;
-
-  logger.debug('username', username);
-  logger.debug('phone_number', phone_number);
-  logger.debug('gcm_token', gcm_token);
-
-  if(!username) {
-    return res.json({ status: 'fail', detail: 'username not given' });
-  }
-
-  if(!phone_number) {
-    return res.json({ status: 'fail', detail: 'phone_number not given' });
-  }
-
-  pg.connect(pgConnectionString, function(err, client, done) {
-
-    signupUser(client, username, phone_number, gcm_token, logger, function(resp) {
-      logger.debug('Got response from API', resp);
-      logger.info('User', username, 'signed up');
-      logger.info('User ID', resp.user_id);
-      logger.info('Token', resp.token);
-      return res.json(resp);
-    });
-
-  });
-});
-
-// topic members api
-// TODO: check token before proceeding !!!
-router.post('/members', function(req, res) {
-
-  var topic_id = req.body.topic_id;
-
-  logger.debug('topic_id', topic_id);
-
-  if(!topic_id) {
-    return res.json({ status: 'fail', detail: 'topic_id not given' });
-  }
-
-  pg.connect(pgConnectionString, function(err, client, done) {
-
-    topicMembers(client, topic_id, logger, function(resp) {
-      logger.debug('Got response from API', resp);
-      return res.json(resp);
-    });
-
-  });
-});
-
-app.use('/api', router);
 
 // initialize DB with client pool
 pg.connect(pgConnectionString, function(err, client, done) {
@@ -205,94 +142,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
         socket.disconnect();
       }
     }, 60000);
-
-    // roomlist api
-    socket.on('roomlist_request', function() {
-
-      // if socket not authenticated
-      if(!socket.auth) {
-        logger.error('Not authenticated socket', socket.id);
-        socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
-        socket.disconnect();
-        return;
-      }
-
-      logger.info('User ' + socket.user_id + ' asks for room list');
-
-      roomList(client, logger, function(roomlist){
-        logger.info('Sending room list to ' + socket.user_id);
-        logger.debug('Sending data ' + JSON.stringify(roomlist));
-        socket.emit('roomlist_response', { status: 'ok', data: roomlist });
-      });
-
-    });
-
-    // Topiclist api
-    socket.on('topiclist_request', function(data) {
-
-      // if socket not authenticated
-      if(!socket.auth) {
-        logger.error('Not authenticated socket', socket.id);
-        socket.emit('roomlist_response', {status: 'fail', detail: 'not-authenticated'});
-        socket.disconnect();
-        return;
-      }
-
-      logger.debug('User ' + socket.user_id + ' asks for topic list');
-
-      // if room id not given
-      try {
-        var room_id = data.room_id;
-      } catch (err) {
-        logger.error('No room id given for topiclist api', socket.id);
-        return socket.emit('topiclist_response', {status: 'fail', detail: 'room_id not given'});
-      }
-
-      // send topic list
-      topicList(client, room_id, socket.user_id, logger, function(topiclist){
-        logger.info('Sending topic list to ' + socket.user_id);
-        logger.debug('Sending data ' + JSON.stringify(topiclist));
-        socket.emit('topiclist_response', { status: 'ok', data: topiclist });
-      });
-
-    });
-
-    // topic create api
-    socket.on('topiccreate_request', function(data) {
-
-      // if socket not authenticated
-      if(!socket.auth) {
-        socket.emit('topiccreate_response', {'status': 'fail', 'detail': 'not-authenticated'});
-        socket.disconnect();
-        return;
-      }
-
-      logger.info('User ' + socket.user_id + ' asks for topic create');
-
-      // if topic title not given
-      try {
-        var title = data.title;
-        var body = data.body;
-        var parent_room = data.parent_room;
-        var attrs = data.attrs;
-      } catch (err) {
-        logger.error('Parameters not fully given for topiccreate api', socket.id);
-        return socket.emit('topiccreate_response', {status: 'fail', detail: 'parameters not fully given, check api docs'});
-      }
-
-      var owner = socket.user_id;
-
-      // send topic create result to user
-      topicCreate(client, title, body, parent_room, owner, attrs, logger, function(resp){
-
-        logger.debug('Sending ->', resp);
-        socket.emit('topiccreate_response', resp);
-
-        // Broadcast topic event to all including this socket
-        // io.emit('topic_events', {event_type: 'created', object: resp});
-      });
-
-    });
 
     // topic message api
     socket.on('topic_message', function(data) {
