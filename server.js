@@ -4,8 +4,8 @@ var app = express();
 var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
-var pg = require('pg').native;
-// var redis = require('redis');
+var pg = require('pg');
+var redis = require('redis');
 
 // funktionale programminghe stuffhe
 // ay lob konkyurent kompyuting mazapaka
@@ -33,20 +33,20 @@ var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
 var gcm_api_key = process.env.GCM_API_KEY || config.gcm_api_key;
 
-// // redis client instance
-// var redisClient = redis.createClient({
-//   host: config.redis.host,
-//   port: config.redis.port,
-// });
-// redisClient.on('error', function(err) {
-//   logger.error('Cannot connect to Redis');
-//   process.exit(-1);
-// });
-// redisClient.select(config.redis.db);
-// if(config.redis.auth)redisClient.auth(config.redis.auth);
-// redisClient.on('connect', function() {
-//   logger.info('Connected to Redis');
-// });
+// redis client instance
+var redisClient = redis.createClient({
+  host: config.redis.host,
+  port: config.redis.port,
+});
+redisClient.on('error', function(err) {
+  logger.error('Cannot connect to Redis');
+  process.exit(-1);
+});
+redisClient.select(config.redis.db);
+if(config.redis.auth)redisClient.auth(config.redis.auth);
+redisClient.on('connect', function() {
+  logger.info('Connected to Redis');
+});
 
 // api import
 var getAllTopics = require('./api/alltopics.js');
@@ -59,6 +59,7 @@ var topicMembers = require('./api/topicmembers');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
 var topicUnsubscribe = require('./api/topicunsubscribe');
+var sendGCMToTopic = require('./api/sendgcmtotopic');
 
 // workers import
 var gcmPushSender = require('./workers/gcmpushsender.js');
@@ -76,9 +77,9 @@ pg.connect(pgConnectionString, function(err, client, done) {
   logger.info('Connected to PostgreSQL');
 
   // get all topics
-  getAllTopics(client, logger, function(topics) {
-    logger.info('Got all topics =>', JSON.stringify(topics));
-  });
+  // getAllTopics(client, logger, function(topics) {
+  //  logger.info('Got all topics =>', JSON.stringify(topics));
+  // });
 
   // on socket connection
   io.sockets.on('connection', function (socket) {
@@ -181,6 +182,9 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+        sendGCMToTopic(client, topic_id, logger, function() {
+          logger.debug('Sent gcm');
+        });
       });
 
     });
