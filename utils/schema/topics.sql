@@ -14,7 +14,6 @@ create table "topics" (
 /* topic_create_notify */
 CREATE OR REPLACE FUNCTION topic_create_notify() RETURNS trigger AS $$
 DECLARE
-id bigint;
 BEGIN
   PERFORM pg_notify('topic_events', json_build_object('data', NEW)::text);
   RETURN NEW;
