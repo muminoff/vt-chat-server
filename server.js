@@ -61,7 +61,6 @@ var topicMembers = require('./api/topicmembers');
 var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
 var topicUnsubscribe = require('./api/topicunsubscribe');
-var sendGCMToTopic = require('./api/sendgcmtotopic');
 
 // workers import
 var gcmPushSender = require('./workers/gcmpushsender.js');
@@ -188,9 +187,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
-        sendGCMToTopic(client, topic_id, logger, function() {
-          logger.debug('Sent gcm');
-        });
       });
 
     });
