@@ -250,26 +250,20 @@ pg.connect(pgConnectionString, function(err, client, done) {
     switch (data.channel) {
     case 'topic_events':
       logger.info('New topic event fired, pid %d', data.processId);
-      var topic_id = JSON.parse(data.payload).topic_id;
-      logger.debug(topic_id);
+      var topic_data = JSON.parse(data.payload);
+      logger.debug(topic_data);
       var socket_ids = Object.keys(io.engine.clients);
       logger.debug("Socket IDs =>", socket_ids);
       socket_ids.forEach(function(socketid) {
         var currentSocket = io.of('/').connected[socketid];
         var currentUserID = currentSocket.user_id;
         var currentUsername = currentSocket.username;
-        logger.debug("Handling socket", currentSocket.id, "to join topic", topic_id);
+        logger.debug("Handling socket", currentSocket.id, "to join topic", topic_data.id);
         logger.debug("User ID:", currentUserID);
         logger.debug("Username:", currentUsername);
-        io.of('/').connected[socketid].join("topic" + topic_id);
+        io.of('/').connected[socketid].join("topic" + topic_data.id);
       });
-      // logger.debug('Sockets', Object.keys(io.engine.clients));
-      // logger.debug('Sockets', io.engine.connected);
-      // io.engine.clients.forEach(function(socket) {
-      //   logger.debug(socket);
-      //   // socket.join('topic' + topic_id);
-      // });
-      io.emit('topic_events', {event_type: 'created', topic_id: topic_id});
+      io.emit('topic_events', {event_type: 'created', data: topic_data});
       // TODO:
       // broadcast data.payload to offline users via gcm push
       break;

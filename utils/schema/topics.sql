@@ -16,12 +16,7 @@ CREATE OR REPLACE FUNCTION topic_create_notify() RETURNS trigger AS $$
 DECLARE
 id bigint;
 BEGIN
-  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-    id = NEW.id;
-  ELSE
-    id = OLD.id;
-  END IF;
-  PERFORM pg_notify('topic_events', json_build_object('topic_id', id)::text);
+  PERFORM pg_notify('topic_events', json_build_object('data', NEW)::text);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
