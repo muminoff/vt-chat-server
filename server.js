@@ -4,8 +4,8 @@ var app = express();
 var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
-var pg = require('pg');
-// var redis = require('redis');
+var pg = require('pg').native;
+var redis = require('redis');
 
 // funktionale programminghe stuffhe
 // ay lob konkyurent kompyuting mazapaka
@@ -34,19 +34,21 @@ var port = process.env.PORT || config.port;
 var gcm_api_key = process.env.GCM_API_KEY || config.gcm_api_key;
 
 // redis client instance
-// var redisClient = redis.createClient({
-//   host: config.redis.host,
-//   port: config.redis.port,
-// });
-// redisClient.on('error', function(err) {
-//   logger.error('Cannot connect to Redis');
-//   process.exit(-1);
-// });
-// redisClient.select(config.redis.db);
-// if(config.redis.auth)redisClient.auth(config.redis.auth);
-// redisClient.on('connect', function() {
-//   logger.info('Connected to Redis');
-// });
+var redisClient = redis.createClient({
+  host: config.redis.host,
+  port: config.redis.port,
+});
+redisClient.on('error', function(err) {
+  logger.error('Cannot connect to Redis');
+  process.exit(-1);
+});
+
+redisClient.select(config.redis.db);
+if(config.redis.auth)redisClient.auth(config.redis.auth);
+
+redisClient.on('connect', function() {
+  logger.info('Connected to Redis');
+});
 
 // api import
 var getAllTopics = require('./api/alltopics.js');
@@ -107,6 +109,8 @@ pg.connect(pgConnectionString, function(err, client, done) {
           socket.auth = true;
           socket.user_id = user.id;
           socket.username = user.username;
+          socket.gcm_token = user.gcm_token;
+
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
 
@@ -117,11 +121,13 @@ pg.connect(pgConnectionString, function(err, client, done) {
               
               // get topic id
               var topicid = topics[i].topic_id;
+              var topic_keyspace = 'topic' + topicid;
 
               // join user to topic
               socket.join('topic' + topicid);
               logger.debug('User', socket.username, 'has now joined to topic', topicid);
-
+              logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
+              redisClient.srem(topic_keyspace, socket.gcm_token);
               // remove user_id from offline users
               // redisClient.srem('topic' + topicid, socket.user_id);
             }
@@ -236,11 +242,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
   });
 
-  client.query('LISTEN message_events', function(err, result) {
-    if(err)logger.error('Cannot listen to message_event');
-    logger.info('Listener started for message_events');
-  });
-
   client.query('LISTEN topic_events', function(err, result) {
     if(err)logger.error('Cannot listen to topic_events');
     logger.info('Listener started for topic_events');
@@ -263,7 +264,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
         logger.debug("Username:", currentUsername);
         io.of('/').connected[socketid].join("topic" + topic_data.id);
       });
-      io.emit('topic_events', {event_type: 'created', data: topic_data});
+      io.emit('topic_events', {event_type: 'created', data: topic_data.data});
       // TODO:
       // broadcast data.payload to offline users via gcm push
       break;

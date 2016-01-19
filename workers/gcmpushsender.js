@@ -62,11 +62,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
   logger.info('Connected to PostgreSQL');
 
-  redisClient.set('foo', 'bar');
-  redisClient.get('foo', function(err, reply) {
-    logger.debug('foo =>', reply);
-  });
-
   client.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id = s.user_id group by s.topic_id', function(err, result) {
     if(err)logger.error('Cannot get gcm_tokens');
 
