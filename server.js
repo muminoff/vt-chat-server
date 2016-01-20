@@ -127,8 +127,6 @@ pg.connect(pgConnectionString, function(err, client, done) {
               logger.debug('User', socket.username, 'has now joined to topic', topicid);
               logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
               redisClient.srem(topic_keyspace, socket.gcm_token);
-              // remove user_id from offline users
-              // redisClient.srem('topic' + topicid, socket.user_id);
             }
           });
 
@@ -145,6 +143,25 @@ pg.connect(pgConnectionString, function(err, client, done) {
     setTimeout(function() {
       if(!socket.auth) {
         logger.error('Socket authentication timeout', socket.id);
+        logger.debug('Getting subscribed topics of user', socket.username, '...');
+
+        userTopics(client, socket.user_id, logger, function(topics) {
+
+          logger.info('Got response from API', topics);
+
+          for (var i = 0; i < topics.length; i++) {
+
+            // get topic id
+            var topicid = topics[i].topic_id;
+            var topic_keyspace = 'topic' + topicid;
+
+            // join user to topic
+            // socket.leave('topic' + topicid);
+            logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+            redisClient.sadd(topic_keyspace, socket.gcm_token);
+          }
+        });
+
         socket.disconnect();
       }
     }, 60000);
@@ -230,8 +247,10 @@ pg.connect(pgConnectionString, function(err, client, done) {
     // Client disconnected 
     socket.on('disconnect', function(){
       logger.info('Client disconnected', socket.id);
-      if(typeof(socket.user_id) !== 'undefined')
+      if(typeof(socket.user_id) !== 'undefined') {
         logger.info('Client user_id was', socket.user_id);
+        logger.info('Client username was', socket.username);
+      }
       delete socket;
       logger.warn('Socket destroyed', socket.id);
     });
