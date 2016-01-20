@@ -5,13 +5,13 @@
 # psql -U vt -d vt -c "create extension pgcrypto"
 
 # Tables
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/users.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/tokens.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/rooms.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/topics.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/announcements.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/subscribers.sql
-psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/messages.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/users.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/tokens.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/rooms.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/topics.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/announcements.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/subscribers.sql
+# psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt <utils/schema/messages.sql
 
 # VT Robot
 psql -h vt.cgsrhj75wyom.us-west-2.rds.amazonaws.com -d vt -U vt -c "insert into users (username, phone_number, gcm_token) values('VTRobot', '777', 'vtrobot_gcm_token')"
