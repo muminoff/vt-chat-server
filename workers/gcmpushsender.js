@@ -66,7 +66,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
     if(err)logger.error('Cannot get gcm_tokens');
 
     result.rows.forEach(function(row) {
-      logger.debug('--------------->', row);
+      logger.debug('Got all offline gcm_tokens');
       redisClient.sadd('topic' + row.topic_id, row.tokens);
     });
 
@@ -87,13 +87,20 @@ pg.connect(pgConnectionString, function(err, client, done) {
         var message_data = JSON.parse(data.payload).data;
         logger.info('-->', message_data.topic_id);
         redisClient.smembers('topic' + message_data.topic_id, function(err, reply) {
-          logger.debug('Got from redis', reply);
-          sendGCMPushNotification(reply, message_data);
+          logger.debug('Got from redis', reply.length, 'tokens');
+          sendMessagePush(reply, message_data);
+          logger.debug('Sent push notifications');
         });
-        // logger.debug(topicsWithTokens);
-        // var message_data = JSON.parse(data.payload);
-        // logger.debug(message_data);
-        // var regTokens = redisClient.smembers('topic' + message_data.topic_id + ':gcm_tokens')
+        break;
+      case 'topic_events':
+        logger.info('New topic event fired');
+        logger.info(data.payload);
+        var topic_data = JSON.parse(data.payload).data;
+        redisClient.smembers('topic' + topic_data.id, function(err, reply) {
+          logger.debug('Got from redis', reply.length, 'tokens');
+          sendTopicPush(reply, topic_data);
+          logger.debug('Sent push notifications');
+        });
         break;
       default:
         logger.warn('Some event fired in DB');
@@ -102,7 +109,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
 });
 
-var sendGCMPushNotification = function(regTokens, message_data) {
+var sendMessagePush = function(regTokens, message_data) {
 
   logger.debug('GCM Push Notification worker got', regTokens);
 
@@ -110,7 +117,28 @@ var sendGCMPushNotification = function(regTokens, message_data) {
   var message = new gcm.Message();
 
   // add data to message
-  message.addData(message_data.topic_id, message_data);
+  message.addData('offline_messages', message_data);
+
+  // set up the sender with gcm_api_key
+  var sender = new gcm.Sender(config.gcm_api_key);
+
+  // now the sender can be used to send messages
+  sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+      if(err)logger.error('GCM server responded with error', err);
+      logger.debug(response);
+  });
+
+};
+
+var sendTopicPush = function(regTokens, topic_data) {
+
+  logger.debug('GCM Push Notification worker got', regTokens);
+
+  // initialize new gcm message
+  var message = new gcm.Message();
+
+  // add data to message
+  message.addData('offline_topic_created', topic_data);
 
   // set up the sender with gcm_api_key
   var sender = new gcm.Sender(config.gcm_api_key);
