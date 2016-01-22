@@ -13,8 +13,7 @@
     name: "vt"
     pool_size: 200
   redis: 
-    host: "localhost"
-    # host: "vt-qm.0rpdlx.0001.usw2.cache.amazonaws.com"
+    host: "vt-qm.0rpdlx.0001.usw2.cache.amazonaws.com"
     port: 6379
     auth:
     db: 0
