@@ -14,8 +14,8 @@ var logger = module.exports = new (winston.Logger)({
           (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
       }
     }),
-    // new (winston.transports.Console)({
-    //     colorize: 'all'
-    // })
+    new (winston.transports.Console)({
+        colorize: 'all'
+    })
   ]
 });

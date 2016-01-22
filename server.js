@@ -4,8 +4,13 @@ var app = express();
 var server = require('http').createServer(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
-var pg = require('pg').native;
+var pg = require('pg');
 var redis = require('redis');
+
+// turn on the radar to catch errors
+var raven = require('raven');
+var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
+radar.patchGlobal();
 
 // funktionale programminghe stuffhe
 // ay lob konkyurent kompyuting mazapaka
@@ -52,7 +57,6 @@ redisClient.on('connect', function() {
 
 // api import
 var getAllTopics = require('./api/alltopics.js');
-var signupUser = require('./api/signup');
 var signinUser = require('./api/signin');
 var userTopics = require('./api/usertopics');
 var roomList = require('./api/roomlist');
@@ -62,47 +66,49 @@ var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
 var topicUnsubscribe = require('./api/topicunsubscribe');
 
-// workers import
-var gcmPushSender = require('./workers/gcmpushsender.js');
 
-// initialize DB with client pool
-pg.connect(pgConnectionString, function(err, client, done) {
+logger.info('Connected to PostgreSQL');
 
-  // on database connection failure
-  if(err){
-    logger.error('Cannot connect to PostgreSQL');
-    logger.error(err);
-    process.exit(-1);
-  }
+// get all topics
+// getAllTopics(client, logger, function(topics) {
+//  logger.info('Got all topics =>', JSON.stringify(topics));
+// });
 
-  logger.info('Connected to PostgreSQL');
+// on socket connection
+io.sockets.on('connection', function (socket) {
 
-  // get all topics
-  // getAllTopics(client, logger, function(topics) {
-  //  logger.info('Got all topics =>', JSON.stringify(topics));
-  // });
+  socket.auth = false;
 
-  // on socket connection
-  io.sockets.on('connection', function (socket) {
+  logger.debug('Socket connected', socket.id);
+  logger.debug('Socket address:', socket.handshake.address);
 
-    socket.auth = false;
+  // on authentication
+  socket.on('signin_request', function(data) {
 
-    logger.debug('Socket connected', socket.id);
-    logger.debug('Socket address:', socket.handshake.address);
+    // if no token given
+    try {
+      var token = data.token;
+    } catch (err) {
+      logger.error('No token given for authentication', socket.id);
+      return socket.emit('signin_response', {status: 'fail', detail: 'token not given'});
+    }
 
-    // on authentication
-    socket.on('signin_request', function(data) {
+    logger.debug('Token ' + token + ' received from socket', socket.id);
 
-      // if no token given
-      try {
-        var token = data.token;
-      } catch (err) {
-        logger.error('No token given for authentication', socket.id);
-        return socket.emit('signin_response', {status: 'fail', detail: 'token not given'});
+    // get connection from pool
+    pg.connect(pgConnectionString, function(err, client, done) {
+    
+      // on database connection failure
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
       }
 
-      logger.debug('Token ' + token + ' received from socket', socket.id);
       signinUser(client, token, logger, function(user) {
+
+        done();
 
         if(user && 'id' in user) {
           socket.auth = true;
@@ -137,70 +143,99 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
       });
 
-    });
+    }); 
 
-    // if not authenticated kick it away after 1 sec
-    setTimeout(function() {
-      if(!socket.auth) {
-        logger.error('Socket authentication timeout', socket.id);
-        logger.debug('Getting subscribed topics of user', socket.username, '...');
+  });
 
-        userTopics(client, socket.user_id, logger, function(topics) {
+  // if not authenticated kick it away after 1 sec
+  setTimeout(function() {
+    if(!socket.auth) {
+      logger.error('Socket authentication timeout', socket.id);
+      logger.debug('Getting subscribed topics of user', socket.username, '...');
 
-          logger.info('Got response from API', topics);
-
-          for (var i = 0; i < topics.length; i++) {
-
-            // get topic id
-            var topicid = topics[i].topic_id;
-            var topic_keyspace = 'topic' + topicid;
-
-            // join user to topic
-            // socket.leave('topic' + topicid);
-            logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-            redisClient.sadd(topic_keyspace, socket.gcm_token);
-          }
-        });
-
-        socket.disconnect();
-      }
-    }, 60000);
-
-    // topic message api
-    socket.on('topic_message', function(data) {
-
-      // if socket not authenticated
-      if(!socket.auth) {
-        socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
-        socket.disconnect();
-        return;
+    // get connection from pool
+    pg.connect(pgConnectionString, function(err, client, done) {
+    
+      // on database connection failure
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
       }
 
-      if(typeof(data.stamp_id) === 'undefined') {
-        var stamp_id = null;
-      } else {
-        var stamp_id = data.stamp_id;
+      userTopics(client, socket.user_id, logger, function(topics) {
+
+        done();
+
+        logger.info('Got response from API', topics);
+
+        for (var i = 0; i < topics.length; i++) {
+
+          // get topic id
+          var topicid = topics[i].topic_id;
+          var topic_keyspace = 'topic' + topicid;
+
+          // join user to topic
+          // socket.leave('topic' + topicid);
+          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+          redisClient.sadd(topic_keyspace, socket.gcm_token);
+        }
+      });
+
+      socket.disconnect();
+
+      });
+    }
+  }, 1000);
+
+  // topic message api
+  socket.on('topic_message', function(data) {
+
+    // if socket not authenticated
+    if(!socket.auth) {
+      socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.disconnect();
+      return;
+    }
+
+    if(typeof(data.stamp_id) === 'undefined') {
+      var stamp_id = null;
+    } else {
+      var stamp_id = data.stamp_id;
+    }
+
+    var topic_id = data.topic_id;
+    var body = data.body;
+
+    if(typeof(data.reply_to) === 'undefined') {
+      var reply_to = null;
+    } else {
+      var reply_to = data.reply_to;
+    }
+
+    if(typeof(data.attrs) === 'undefined') {
+      var attrs = null;
+    } else {
+      var attrs = data.attrs;
+    }
+
+    logger.info('Message came from topic', topic_id, 'with data', data);
+    logger.debug('Saving message to DB');
+
+    // get connection from pool
+    pg.connect(pgConnectionString, function(err, client, done) {
+
+      // on database connection failure
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
       }
-
-      var topic_id = data.topic_id;
-      var body = data.body;
-
-      if(typeof(data.reply_to) === 'undefined') {
-        var reply_to = null;
-      } else {
-        var reply_to = data.reply_to;
-      }
-
-      if(typeof(data.attrs) === 'undefined') {
-        var attrs = null;
-      } else {
-        var attrs = data.attrs;
-      }
-
-      logger.info('Message came from topic', topic_id, 'with data', data);
-      logger.debug('Saving message to DB');
 
       messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, logger, function(msg) {
+        done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('topic_message', msg);
@@ -208,27 +243,42 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
-    // topic unsubscribe api
-    socket.on('topicunsubscribe_request', function(data) {
+  });
 
-      // if socket not authenticated
-      if(!socket.auth) {
-        socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
-        socket.disconnect();
-        return;
+  // topic unsubscribe api
+  socket.on('topicunsubscribe_request', function(data) {
+
+    // if socket not authenticated
+    if(!socket.auth) {
+      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.disconnect();
+      return;
+    }
+
+    logger.info('User ' + socket.user_id + ' asks for topic unsubscribe');
+
+    // if topic id not given
+    if(typeof(data.topic_id) === 'undefined') {
+      socket.emit('topicunsubscribe_response', {status: 'fail', detail: 'topic_id not given'});
+    }
+
+    var topic_id = data.topic_id;
+
+    // get connection from pool
+    pg.connect(pgConnectionString, function(err, client, done) {
+
+      // on database connection failure
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
       }
-
-      logger.info('User ' + socket.user_id + ' asks for topic unsubscribe');
-
-      // if topic id not given
-      if(typeof(data.topic_id) === 'undefined') {
-        socket.emit('topicunsubscribe_response', {status: 'fail', detail: 'topic_id not given'});
-      }
-
-      var topic_id = data.topic_id;
 
       // unsubscribe user from topic and send response
       topicUnsubscribe(client, socket.user_id, topic_id, logger, function(success){
+
+        done();
 
         logger.debug('Sending ->', resp);
 
@@ -244,25 +294,37 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
     });
 
-    // Client disconnected 
-    socket.on('disconnect', function(){
-      logger.info('Client disconnected', socket.id);
-      if(typeof(socket.user_id) !== 'undefined') {
-        logger.info('Client user_id was', socket.user_id);
-        logger.info('Client username was', socket.username);
-      }
-      delete socket;
-      logger.warn('Socket destroyed', socket.id);
-    });
-
   });
 
-  client.query('LISTEN topic_events', function(err, result) {
+  // Client disconnected 
+  socket.on('disconnect', function(){
+    logger.info('Client disconnected', socket.id);
+    if(typeof(socket.user_id) !== 'undefined') {
+      logger.info('Client user_id was', socket.user_id);
+      logger.info('Client username was', socket.username);
+    }
+    delete socket;
+    logger.warn('Socket destroyed', socket.id);
+  });
+
+}); // io connection end
+
+var pgClient = new pg.Client(pgConnectionString);
+pgClient.connect(function(err) {
+
+  // on database connection failure
+  if(err){
+    logger.error('Cannot connect to PostgreSQL');
+    logger.error(err);
+    process.exit(-1);
+  }
+
+  pgClient.query('LISTEN topic_events', function(err, result) {
     if(err)logger.error('Cannot listen to topic_events');
     logger.info('Listener started for topic_events');
   });
 
-  client.on('notification', function(data) {
+  pgClient.on('notification', function(data) {
     switch (data.channel) {
     case 'topic_events':
       logger.info('New topic event fired, pid %d', data.processId);

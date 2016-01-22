@@ -14,8 +14,13 @@ var config = require('../utils/config');
 var logger = require('../logger');
 logger.level = config.log_level;
 
+// turn on the radar to catch errors
+var raven = require('raven');
+var radar = new raven.Client('http://3f228dbaa0824fbda9ce48af61ac0147:66b1b4df0d344db58cefc852103d05e7@sentry.drivers.uz/4');
+radar.patchGlobal();
+
 // db pool size
-pg.defaults.poolSize = config.postgresql.pool_size;
+// pg.defaults.poolSize = config.postgresql.pool_size;
 
 // variables
 var pgUsername = config.postgresql.user;
@@ -50,8 +55,8 @@ redisClient.on('connection', function() {
   logger.info('Connected to Redis');
 });
 
-// initialize DB with client pool
-pg.connect(pgConnectionString, function(err, client, done) {
+var pgClient = new pg.Client(pgConnectionString);
+pgClient.connect(function(err) {
 
   // on database connection failure
   if(err){
@@ -62,7 +67,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
 
   logger.info('Connected to PostgreSQL');
 
-  client.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id = s.user_id group by s.topic_id', function(err, result) {
+  pgClient.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id = s.user_id group by s.topic_id', function(err, result) {
     if(err)logger.error('Cannot get gcm_tokens');
 
     result.rows.forEach(function(row) {
@@ -73,13 +78,13 @@ pg.connect(pgConnectionString, function(err, client, done) {
   });
 
 
-  client.query('LISTEN message_events', function(err, result) {
+  pgClient.query('LISTEN message_events', function(err, result) {
     if(err)logger.error('Cannot listen to message_event');
     logger.info('Listener started for message_events');
   });
 
 
-  client.on('notification', function(data) {
+  pgClient.on('notification', function(data) {
     switch (data.channel) {
       case 'message_events':
         logger.info('New message event fired');
