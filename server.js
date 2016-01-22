@@ -342,11 +342,6 @@ pgClient.connect(function(err) {
         io.of('/').connected[socketid].join("topic" + topic_data.id);
       });
       io.emit('topic_events', {event_type: 'created', data: topic_data.data});
-      // TODO:
-      // broadcast data.payload to offline users via gcm push
-      break;
-    case 'message_events':
-      logger.info('New message event fired, pid %d', data.processId);
       break;
     default:
       logger.warn('Some event fired in DB');
