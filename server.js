@@ -288,6 +288,28 @@ io.sockets.on('connection', function (socket) {
 
   });
 
+  // typing indicator api
+  socket.on('typing_event', function(data) {
+
+    // if socket not authenticated
+    if(!socket.auth) {
+      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.disconnect();
+      return;
+    }
+
+    logger.info('User ' + socket.username + ' informs typing_event');
+
+    // if topic id not given
+    if(typeof(data.topic_id) === 'undefined') {
+      socket.emit('typing_event', {status: 'fail', detail: 'topic_id not given'});
+    }
+
+    var topic_id = data.topic_id;
+    io.sockets.in('topic' + topic_id).emit('typing_event', { topic: topic_id, user: socket.user_id });
+
+  });
+
   // Client disconnected 
   socket.on('disconnect', function(){
 
