@@ -16,17 +16,15 @@ CREATE OR REPLACE FUNCTION topic_create_notify() RETURNS trigger AS $$
 DECLARE
 BEGIN
   IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', NEW.owner, 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', (SELECT username FROM users WHERE id=NEW.owner)::text, 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', NEW.owner, 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', (SELECT username FROM users WHERE id=NEW.owner)::text, 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'title', OLD.title, 'body', OLD.body, 'parent_room', OLD.parent_room, 'solved', OLD.solved, 'archived', OLD.archived, 'owner', OLD.owner, 'attrs', OLD.attrs, 'created_at', (extract(epoch from OLD.created_at) * 1000)::int8))::text);
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'title', OLD.title, 'body', OLD.body, 'parent_room', OLD.parent_room, 'solved', OLD.solved, 'archived', OLD.archived, 'owner', (SELECT username FROM users WHERE id=OLD.owner)::text, 'attrs', OLD.attrs, 'created_at', (extract(epoch from OLD.created_at) * 1000)::int8))::text);
     RETURN OLD;
   END IF;
-  /* PERFORM pg_notify('topic_events', json_build_object('data', NEW)::text); */
-  PERFORM pg_notify('topic_events', NEW);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

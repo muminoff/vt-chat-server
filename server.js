@@ -56,23 +56,15 @@ redisClient.on('connect', function() {
 });
 
 // api import
-var getAllTopics = require('./api/alltopics.js');
 var signinUser = require('./api/signin');
 var userTopics = require('./api/usertopics');
-var roomList = require('./api/roomlist');
-var topicList = require('./api/topiclist');
-var topicMembers = require('./api/topicmembers');
-var topicCreate = require('./api/topiccreate');
 var messageSave = require('./api/messagesave');
 var topicUnsubscribe = require('./api/topicunsubscribe');
 
 
 logger.info('Connected to PostgreSQL');
 
-// get all topics
-// getAllTopics(client, logger, function(topics) {
-//  logger.info('Got all topics =>', JSON.stringify(topics));
-// });
+var onlineSockets = [];
 
 // on socket connection
 io.sockets.on('connection', function (socket) {
@@ -118,6 +110,7 @@ io.sockets.on('connection', function (socket) {
 
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
+          onlineSockets.push(socket);
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
           userTopics(client, socket.user_id, logger, function(topics) {
@@ -176,7 +169,6 @@ io.sockets.on('connection', function (socket) {
           var topicid = topics[i].topic_id;
           var topic_keyspace = 'topic' + topicid;
 
-          // join user to topic
           // socket.leave('topic' + topicid);
           logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
           redisClient.sadd(topic_keyspace, socket.gcm_token);
@@ -298,13 +290,46 @@ io.sockets.on('connection', function (socket) {
 
   // Client disconnected 
   socket.on('disconnect', function(){
+
+    // get connection from pool
+    pg.connect(pgConnectionString, function(err, client, done) {
+    
+      // on database connection failure
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
+      }
+
+      userTopics(client, socket.user_id, logger, function(topics) {
+
+        done();
+
+        logger.info('Got response from API', topics);
+
+        for (var i = 0; i < topics.length; i++) {
+
+          // get topic id
+          var topicid = topics[i].topic_id;
+          var topic_keyspace = 'topic' + topicid;
+
+          // socket.leave('topic' + topicid);
+          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+          redisClient.sadd(topic_keyspace, socket.gcm_token);
+        }
+      });
+
+      socket.disconnect();
+
+    });
+
     logger.info('Client disconnected', socket.id);
     if(typeof(socket.user_id) !== 'undefined') {
       logger.info('Client user_id was', socket.user_id);
       logger.info('Client username was', socket.username);
     }
     delete socket;
-    logger.warn('Socket destroyed', socket.id);
   });
 
 }); // io connection end
@@ -329,19 +354,9 @@ pgClient.connect(function(err) {
     case 'topic_events':
       logger.info('New topic event fired, pid %d', data.processId);
       var topic_data = JSON.parse(data.payload);
-      logger.debug(topic_data);
-      var socket_ids = Object.keys(io.engine.clients);
-      logger.debug("Socket IDs =>", socket_ids);
-      socket_ids.forEach(function(socketid) {
-        var currentSocket = io.of('/').connected[socketid];
-        var currentUserID = currentSocket.user_id;
-        var currentUsername = currentSocket.username;
-        logger.debug("Handling socket", currentSocket.id, "to join topic", topic_data.id);
-        logger.debug("User ID:", currentUserID);
-        logger.debug("Username:", currentUsername);
-        io.of('/').connected[socketid].join("topic" + topic_data.id);
-      });
-      io.emit('topic_events', {event_type: 'created', data: topic_data.data});
+      logger.debug('trigger sent ->', JSON.stringify(topic_data));
+      joinOnlineSockets(topic_data.data.id);
+      io.emit('topic_events', topic_data);
       break;
     default:
       logger.warn('Some event fired in DB');
@@ -349,6 +364,18 @@ pgClient.connect(function(err) {
   });
 
 });
+
+function joinOnlineSockets(topic_id) {
+  logger.debug('Going to join sockets into topic', topic_id);
+  io.of('/').clients(function(error, clients) {
+    if (error) throw error;
+    logger.debug('=clients=>', clients);
+    clients.forEach(function(s) {
+      logger.debug('Joining', s, 'to', topic_id);
+      io.of('/').sockets[s].join('topic'+topic_id);
+    });
+  });
+};
 
 server.listen(port, host, function () {
   logger.info('Server listening at %s:%d', host, port);

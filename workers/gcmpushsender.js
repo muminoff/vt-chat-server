@@ -72,14 +72,20 @@ pgClient.connect(function(err) {
 
     result.rows.forEach(function(row) {
       logger.debug('Got all offline gcm_tokens');
+      redisClient.del('topic' + row.topic_id);
       redisClient.sadd('topic' + row.topic_id, row.tokens);
     });
 
   });
 
 
+  pgClient.query('LISTEN topic_events', function(err, result) {
+    if(err)logger.error('Cannot listen to topic_events');
+    logger.info('Listener started for topic_events');
+  });
+
   pgClient.query('LISTEN message_events', function(err, result) {
-    if(err)logger.error('Cannot listen to message_event');
+    if(err)logger.error('Cannot listen to message_events');
     logger.info('Listener started for message_events');
   });
 
