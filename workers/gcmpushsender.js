@@ -16,8 +16,8 @@ logger.level = config.log_level;
 
 // turn on the radar to catch errors
 var raven = require('raven');
-var radar = new raven.Client('http://3f228dbaa0824fbda9ce48af61ac0147:66b1b4df0d344db58cefc852103d05e7@sentry.drivers.uz/4');
-radar.patchGlobal();
+// var radar = new raven.Client('http://3f228dbaa0824fbda9ce48af61ac0147:66b1b4df0d344db58cefc852103d05e7@sentry.drivers.uz/4');
+// radar.patchGlobal();
 
 // db pool size
 // pg.defaults.poolSize = config.postgresql.pool_size;
@@ -67,8 +67,8 @@ pgClient.connect(function(err) {
 
   logger.info('Connected to PostgreSQL');
 
-  pgClient.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id=s.user_id where not u.device_type="linux" group by s.topic_id', function(err, result) {
-    if(err)logger.error('Cannot get gcm_tokens');
+  pgClient.query("select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id=s.user_id where not u.device_type='linux' group by s.topic_id", function(err, result) {
+    if(err)logger.error('Cannot get gcm_tokens', err);
 
     result.rows.forEach(function(row) {
       logger.debug('Got all offline gcm_tokens');
