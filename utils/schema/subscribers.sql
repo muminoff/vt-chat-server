@@ -1,5 +1,5 @@
 /* subscribers table */
-create table "subscribers" (
+CREATE TABLE "subscribers" (
   "topic_id" bigint not null references topics(id),
   "user_id" bigint not null references users(id),
   "subscribed_at" timestamp without time zone default (now() at time zone 'utc'),

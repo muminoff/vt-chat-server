@@ -143,6 +143,11 @@ var sendMessagePush = function(regTokens, message_data) {
 
 var sendTopicPush = function(regTokens, topic_data) {
 
+  if(regTokens.length === 0){
+    logger.warn('No offline users');
+    return;
+  }
+
   logger.debug('GCM Push Notification worker got', regTokens);
 
   // initialize new gcm message

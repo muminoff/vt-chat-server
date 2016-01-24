@@ -11,6 +11,10 @@ create table "topics" (
   "created_at" timestamp without time zone default (now() at time zone 'utc')
 );
 
+/* topic index */
+CREATE INDEX ON topics (id) WHERE archived IS NOT TRUE;
+CREATE INDEX ON topics (id) WHERE solved IS NOT TRUE;
+
 /* topic_create_notify */
 CREATE OR REPLACE FUNCTION topic_create_notify() RETURNS trigger AS $$
 DECLARE
