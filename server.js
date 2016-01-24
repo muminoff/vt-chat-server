@@ -107,12 +107,14 @@ io.sockets.on('connection', function (socket) {
           socket.user_id = user.id;
           socket.username = user.username;
           socket.gcm_token = user.gcm_token;
+          socket.device_type = user.device_type;
 
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
           onlineSockets.push(socket);
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
+
           userTopics(client, socket.user_id, logger, function(topics) {
             logger.info('Got response from API', topics);
             for (var i = 0; i < topics.length; i++) {
@@ -125,7 +127,7 @@ io.sockets.on('connection', function (socket) {
               socket.join('topic' + topicid);
               logger.debug('User', socket.username, 'has now joined to topic', topicid);
               logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
-              redisClient.srem(topic_keyspace, socket.gcm_token);
+              if(socket.device_type !== 'linux')redisClient.srem(topic_keyspace, socket.gcm_token);
             }
           });
 
@@ -171,7 +173,7 @@ io.sockets.on('connection', function (socket) {
 
           // socket.leave('topic' + topicid);
           logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          redisClient.sadd(topic_keyspace, socket.gcm_token);
+          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
         }
       });
 
@@ -338,7 +340,7 @@ io.sockets.on('connection', function (socket) {
 
           // socket.leave('topic' + topicid);
           logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          redisClient.sadd(topic_keyspace, socket.gcm_token);
+          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
         }
       });
 
