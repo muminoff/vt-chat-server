@@ -16,8 +16,8 @@ logger.level = config.log_level;
 
 // turn on the radar to catch errors
 var raven = require('raven');
-// var radar = new raven.Client('http://3f228dbaa0824fbda9ce48af61ac0147:66b1b4df0d344db58cefc852103d05e7@sentry.drivers.uz/4');
-// radar.patchGlobal();
+var radar = new raven.Client('http://3f228dbaa0824fbda9ce48af61ac0147:66b1b4df0d344db58cefc852103d05e7@sentry.drivers.uz/4');
+radar.patchGlobal();
 
 // db pool size
 // pg.defaults.poolSize = config.postgresql.pool_size;
