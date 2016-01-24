@@ -67,7 +67,7 @@ pgClient.connect(function(err) {
 
   logger.info('Connected to PostgreSQL');
 
-  pgClient.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id = s.user_id group by s.topic_id', function(err, result) {
+  pgClient.query('select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id=s.user_id where not u.device_type="linux" group by s.topic_id', function(err, result) {
     if(err)logger.error('Cannot get gcm_tokens');
 
     result.rows.forEach(function(row) {
