@@ -2,7 +2,7 @@ var socket = require('socket.io-client')('http://chat.drivers.uz');
 var randomstring = require('randomstring');
 socket.on('connect', function(){
   console.log('Connected to socket.io server');
-  socket.emit('signin_request', {'token': '5bacbf34473d4ba9bd53b6c5f6bc9094'});
+  socket.emit('signin_request', {'token': 'f233e96a156d426597bca7a24ff4f8cf'});
   // setTimeout(function() {
   //   socket.emit('roomlist_request');
   // }, 1000);
@@ -17,9 +17,9 @@ socket.on('connect', function(){
   //   socket.emit('topic_message', { stamp_id: randomstring.generate(6), topic_id: randTopic, body: largeText });
   // }, rand);
 });
-  setTimeout(function() {
-    socket.emit('topiccreate_request', {title: 'test112', body: 'testbody', parent_room: 1});
-  }, 1000);
+  // setTimeout(function() {
+  //   socket.emit('topiccreate_request', {title: 'test112', body: 'testbody', parent_room: 1});
+  // }, 1000);
 socket.on('signin_response', function(data){
   console.log(data);
 });
