@@ -12,9 +12,8 @@ var raven = require('raven');
 var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
 radar.patchGlobal();
 
-// funktionale programminghe stuffhe
-// ay lob konkyurent kompyuting mazapaka
-var __ = require('lazy.js');
+// async, raging ocean waves
+var async = require('async');
 
 // logger and config
 var logger = require('./logger');
