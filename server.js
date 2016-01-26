@@ -214,6 +214,25 @@ io.sockets.on('connection', function (socket) {
       var attrs = data.attrs;
     }
 
+    if(typeof(data.is_media) === 'undefined') {
+      var is_media = null;
+    } else {
+      var is_media = data.is_media;
+    }
+
+    if(typeof(data.media_type) === 'undefined') {
+      var media_type = null;
+    } else {
+      var media_type = data.media_type;
+    }
+
+
+    if(typeof(data.media_path) === 'undefined') {
+      var media_path = null;
+    } else {
+      var media_path = data.media_path;
+    }
+
     logger.info('Message came from topic', topic_id, 'with data', data);
     logger.debug('Saving message to DB');
 
@@ -228,7 +247,7 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, logger, function(msg) {
+      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, is_media, media_type, media_path, logger, function(msg) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);

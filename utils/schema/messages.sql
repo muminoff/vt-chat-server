@@ -7,6 +7,9 @@ create table "messages" (
   "reply_to" bigint references messages(id),
   "body" text not null,
   "attrs" jsonb,
+  "is_media" bool default false,
+  "media_type" character varying(5),
+  "media_path" text,
   "sent_at" timestamp without time zone default (now() at time zone 'utc')
 );
 
