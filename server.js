@@ -184,11 +184,11 @@ io.sockets.on('connection', function (socket) {
   }, 1000);
 
   // topic message api
-  socket.on('topic_message', function(data) {
+  socket.on('message_events', function(data) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('message_events', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -251,7 +251,7 @@ io.sockets.on('connection', function (socket) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
-        io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+        io.sockets.in('topic' + topic_id).emit('message_events', msg);
       });
 
     });

@@ -137,7 +137,7 @@ var sendMessagePush = function(regTokens, message_data) {
   var message = new gcm.Message();
 
   // add data to message
-  message.addData('offline_message', message_data);
+  message.addData('message_events', message_data);
   logger.info('offline_message --->', JSON.stringify(message_data));
 
   // set up the sender with gcm_api_key
@@ -164,7 +164,7 @@ var sendTopicPush = function(regTokens, topic_data) {
   var message = new gcm.Message();
 
   // add data to message
-  message.addData('offline_topic', topic_data);
+  message.addData('topic_events', topic_data);
   logger.info('offline_topic --->', JSON.stringify(topic_data));
 
   // set up the sender with gcm_api_key
