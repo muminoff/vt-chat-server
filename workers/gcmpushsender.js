@@ -67,6 +67,15 @@ pgClient.connect(function(err) {
 
   logger.info('Connected to PostgreSQL');
 
+  pgClient.query("select gcm_token from users where not device_type='linux'", function(err, result) {
+    if(err)logger.error('Cannot get all gcm_tokens', err);
+    result.rows.forEach(function(row) {
+      logger.debug('Got all gcm_tokens from DB', row.gcm_token);
+      redisClient.sadd('all_gcm_tokens', row.gcm_token);
+    });
+
+  });
+
   pgClient.query("select s.topic_id, array_agg(u.gcm_token) as tokens from subscribers s right join users u on u.id=s.user_id where not u.device_type='linux' group by s.topic_id", function(err, result) {
     if(err)logger.error('Cannot get gcm_tokens', err);
 
@@ -107,7 +116,7 @@ pgClient.connect(function(err) {
         logger.info('New topic event fired');
         logger.info(data.payload);
         var topic_data = JSON.parse(data.payload).data;
-        redisClient.smembers('topic' + topic_data.id, function(err, reply) {
+        redisClient.smembers('all_gcm_tokens', function(err, reply) {
           logger.debug('Got from redis', reply.length, 'tokens');
           sendTopicPush(reply, topic_data);
           logger.debug('Sent push notifications');
@@ -129,7 +138,7 @@ var sendMessagePush = function(regTokens, message_data) {
 
   // add data to message
   message.addData('offline_message', message_data);
-  logger.debug('offline_message --->', JSON.stringify(message_data));
+  logger.info('offline_message --->', JSON.stringify(message_data));
 
   // set up the sender with gcm_api_key
   var sender = new gcm.Sender(config.gcm_api_key);
@@ -156,7 +165,7 @@ var sendTopicPush = function(regTokens, topic_data) {
 
   // add data to message
   message.addData('offline_topic', topic_data);
-  logger.debug('offline_topic --->', JSON.stringify(topic_data));
+  logger.info('offline_topic --->', JSON.stringify(topic_data));
 
   // set up the sender with gcm_api_key
   var sender = new gcm.Sender(config.gcm_api_key);
