@@ -115,7 +115,7 @@ pgClient.connect(function(err) {
       case 'topic_events':
         logger.info('New topic event fired');
         logger.info(data.payload);
-        var topic_data = JSON.parse(data.payload).data;
+        var topic_data = JSON.parse(data.payload);
         redisClient.smembers('all_gcm_tokens', function(err, reply) {
           logger.debug('Got from redis', reply.length, 'tokens');
           sendTopicPush(reply, topic_data);

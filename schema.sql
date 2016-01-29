@@ -181,6 +181,46 @@ $$;
 ALTER FUNCTION public.topic_create_notify() OWNER TO vt;
 
 --
+-- Name: topic_move_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_move_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.parent_room = OLD.parent_room) THEN
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'moved', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_move_notify() OWNER TO vt;
+
+--
+-- Name: topic_update_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_update_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.title = OLD.title) OR NOT (NEW.body = OLD.body) OR NOT (NEW.attrs = OLD.attrs) THEN
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_update_notify() OWNER TO vt;
+
+--
 -- Name: update_modified_column(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -647,6 +687,20 @@ CREATE TRIGGER trig_topic_close_notify BEFORE UPDATE ON topics FOR EACH ROW EXEC
 --
 
 CREATE TRIGGER trig_topic_create_notify AFTER INSERT ON topics FOR EACH ROW EXECUTE PROCEDURE topic_create_notify();
+
+
+--
+-- Name: trig_topic_move_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_move_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_move_notify();
+
+
+--
+-- Name: trig_topic_update_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_update_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_update_notify();
 
 
 --
