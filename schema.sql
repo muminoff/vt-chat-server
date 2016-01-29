@@ -143,6 +143,27 @@ $$;
 ALTER FUNCTION public.on_user_create_subscribe_all() OWNER TO vt;
 
 --
+-- Name: topic_close_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_close_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.closed = OLD.closed) THEN
+    NEW.closed_at = now() at time zone 'utc';
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'closed', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_close_notify() OWNER TO vt;
+
+--
 -- Name: topic_create_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -152,14 +173,12 @@ CREATE FUNCTION topic_create_notify() RETURNS trigger
 DECLARE
 BEGIN
   IF (TG_OP = 'INSERT') THEN
+    RAISE NOTICE 'Trigger detected new topic creation';
     PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
     RETURN NEW;
-  ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+  ELSIF (TG_OP = 'UPDATE') AND NOT (NEW.closed = OLD.closed) THEN
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'closed', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
     RETURN NEW;
-  ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'title', OLD.title, 'body', OLD.body, 'parent_room', OLD.parent_room, 'closed', OLD.closed, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'attrs', OLD.attrs, 'created_at', (extract(epoch from OLD.created_at) * 1000)::int8, 'closed_at',(extract(epoch from OLD.closed_at) * 1000)::int8))::text);
-    RETURN OLD;
   END IF;
   RETURN NEW;
 END;
@@ -621,6 +640,13 @@ CREATE TRIGGER trig_on_topic_create_subscribe_all AFTER INSERT ON topics FOR EAC
 --
 
 CREATE TRIGGER trig_on_user_create_subscribe_all AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE on_user_create_subscribe_all();
+
+
+--
+-- Name: trig_topic_close_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_close_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_close_notify();
 
 
 --
