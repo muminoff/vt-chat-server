@@ -172,14 +172,7 @@ CREATE FUNCTION topic_create_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  IF (TG_OP = 'INSERT') THEN
-    RAISE NOTICE 'Trigger detected new topic creation';
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
-    RETURN NEW;
-  ELSIF (TG_OP = 'UPDATE') AND NOT (NEW.closed = OLD.closed) THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'closed', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
-    RETURN NEW;
-  END IF;
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
   RETURN NEW;
 END;
 $$;
