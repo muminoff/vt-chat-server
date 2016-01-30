@@ -71,6 +71,40 @@ $$;
 ALTER FUNCTION public.generate_token() OWNER TO vt;
 
 --
+-- Name: member_joins_topic_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION member_joins_topic_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('topic_id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.member_joins_topic_notify() OWNER TO vt;
+
+--
+-- Name: member_leaves_topic_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION member_leaves_topic_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('topic_id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
+  RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION public.member_leaves_topic_notify() OWNER TO vt;
+
+--
 -- Name: message_create_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -366,8 +400,7 @@ ALTER SEQUENCE rooms_id_seq OWNED BY rooms.id;
 CREATE TABLE subscribers (
     topic_id bigint NOT NULL,
     user_id bigint NOT NULL,
-    subscribed_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
-    moderator boolean DEFAULT false
+    subscribed_at timestamp without time zone DEFAULT timezone('utc'::text, now())
 );
 
 
@@ -652,6 +685,20 @@ CREATE INDEX users_expr_idx1 ON users USING btree (((vt ->> 'sticker'::text)));
 --
 
 CREATE TRIGGER trig_generate_token AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE generate_token();
+
+
+--
+-- Name: trig_member_joins_topic_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_member_joins_topic_notify AFTER INSERT ON subscribers FOR EACH ROW EXECUTE PROCEDURE member_joins_topic_notify();
+
+
+--
+-- Name: trig_member_leaves_topic_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_member_leaves_topic_notify BEFORE DELETE ON subscribers FOR EACH ROW EXECUTE PROCEDURE member_leaves_topic_notify();
 
 
 --
