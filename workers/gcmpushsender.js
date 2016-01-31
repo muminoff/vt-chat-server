@@ -104,9 +104,9 @@ pgClient.connect(function(err) {
       case 'message_events':
         logger.info('New message event fired');
         logger.info(data.payload);
-        var message_data = JSON.parse(data.payload).data;
-        logger.info('-->', message_data.topic_id);
-        redisClient.smembers('topic' + message_data.topic_id, function(err, reply) {
+        var message_data = JSON.parse(data.payload);
+        logger.info('-->', message_data.data.topic_id);
+        redisClient.smembers('topic' + message_data.data.topic_id, function(err, reply) {
           logger.debug('Got from redis', reply.length, 'tokens');
           sendMessagePush(reply, message_data);
           logger.debug('Sent push notifications');

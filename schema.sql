@@ -114,13 +114,13 @@ CREATE FUNCTION message_create_notify() RETURNS trigger
 DECLARE
 BEGIN
   IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'is_media', OLD.is_media, 'media_type', OLD.media_type, 'media_path', OLD.media_path, 'media_name', OLD.media_name, 'media_size', OLD.media_size))::text);
     RETURN OLD;
   END IF;
   RETURN NEW;
@@ -329,7 +329,9 @@ CREATE TABLE messages (
     sent_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
     is_media boolean DEFAULT false,
     media_type character varying(5) DEFAULT ''::character varying,
-    media_path text
+    media_path text,
+    media_name text,
+    media_size bigint
 );
 
 
