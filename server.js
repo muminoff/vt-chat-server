@@ -426,8 +426,10 @@ function joinOnlineSockets(topic_id) {
     if (error) throw error;
     logger.debug('=clients=>', clients);
     clients.forEach(function(s) {
-      logger.debug('Joining', s, 'to', topic_id);
-      io.of('/').sockets[s].join('topic'+topic_id);
+      if(typeOf(topic_id)!=='undefined') {
+        logger.debug('Joining', s, 'to', topic_id);
+        io.of('/').sockets[s].join('topic'+topic_id);
+      }
     });
   });
 };
