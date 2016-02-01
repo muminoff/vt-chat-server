@@ -426,7 +426,7 @@ function joinOnlineSockets(topic_id) {
     if (error) throw error;
     logger.debug('=clients=>', clients);
     clients.forEach(function(s) {
-      if(typeOf(topic_id)!=='undefined') {
+      if(typeof(topic_id)!=='undefined') {
         logger.debug('Joining', s, 'to', topic_id);
         io.of('/').sockets[s].join('topic'+topic_id);
       }
