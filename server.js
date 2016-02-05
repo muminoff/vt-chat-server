@@ -56,10 +56,10 @@ redisClient.on('connect', function() {
 });
 
 // api import
-var signinUser = require('./api/signin');
-var userTopics = require('./api/usertopics');
-var messageSave = require('./api/messagesave');
-var topicUnsubscribe = require('./api/topicunsubscribe');
+var signinUser = require('./lib/signin');
+var userTopics = require('./lib/usertopics');
+var messageSave = require('./lib/messagesave');
+var topicUnsubscribe = require('./lib/topicunsubscribe');
 
 
 logger.info('Connected to PostgreSQL');
@@ -284,7 +284,7 @@ io.sockets.on('connection', function (socket) {
 
     // if topic id not given
     if(typeof(data.topic_id) === 'undefined') {
-      socket.emit('topicunsubscribe_response', {status: 'fail', detail: 'topic_id not given'});
+      socket.emit('topic_events', {status: 'fail', detail: 'topic_id not given'});
     }
 
     var topic_id = data.topic_id;
@@ -308,9 +308,9 @@ io.sockets.on('connection', function (socket) {
         logger.debug('Sending ->', resp);
 
         if(success) {
-          socket.emit('topicunsubscribe_response', { status: 'ok', topic_id: topic_id, user: { id: socket.user_id }});
+          socket.emit('topic_events', { status: 'ok', topic_id: topic_id, user: { id: socket.user_id }});
         } else {
-          socket.emit('topicunsubscribe_response', { status: 'fail' });
+          socket.emit('topic_events', { status: 'fail' });
         }
 
       });
