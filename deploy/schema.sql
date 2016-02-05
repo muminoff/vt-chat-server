@@ -131,52 +131,6 @@ $$;
 ALTER FUNCTION public.message_create_notify() OWNER TO vt;
 
 --
--- Name: on_topic_create_subscribe_all(); Type: FUNCTION; Schema: public; Owner: vt
---
-
-CREATE FUNCTION on_topic_create_subscribe_all() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-this_user RECORD;
-BEGIN
-
-  FOR this_user IN SELECT id FROM users LOOP
-    RAISE NOTICE 'Subscriber function executing for user %...', this_user.id;
-    insert into subscribers (topic_id, "user_id") values(new.id, this_user.id);
-  END LOOP;
-
-  RETURN new;
-END;
-$$;
-
-
-ALTER FUNCTION public.on_topic_create_subscribe_all() OWNER TO vt;
-
---
--- Name: on_user_create_subscribe_all(); Type: FUNCTION; Schema: public; Owner: vt
---
-
-CREATE FUNCTION on_user_create_subscribe_all() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-this_topic RECORD;
-BEGIN
-
-  FOR this_topic IN SELECT id FROM topics LOOP
-    RAISE NOTICE 'Subscriber function executing for topic %...', this_topic.id;
-    insert into subscribers (topic_id, "user_id") values(this_topic.id, new.id);
-  END LOOP;
-
-  RETURN new;
-END;
-$$;
-
-
-ALTER FUNCTION public.on_user_create_subscribe_all() OWNER TO vt;
-
---
 -- Name: topic_close_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -708,20 +662,6 @@ CREATE TRIGGER trig_member_leaves_topic_notify BEFORE DELETE ON subscribers FOR 
 --
 
 CREATE TRIGGER trig_message_create_notify AFTER INSERT ON messages FOR EACH ROW EXECUTE PROCEDURE message_create_notify();
-
-
---
--- Name: trig_on_topic_create_subscribe_all; Type: TRIGGER; Schema: public; Owner: vt
---
-
-CREATE TRIGGER trig_on_topic_create_subscribe_all AFTER INSERT ON topics FOR EACH ROW EXECUTE PROCEDURE on_topic_create_subscribe_all();
-
-
---
--- Name: trig_on_user_create_subscribe_all; Type: TRIGGER; Schema: public; Owner: vt
---
-
-CREATE TRIGGER trig_on_user_create_subscribe_all AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE on_user_create_subscribe_all();
 
 
 --
