@@ -147,39 +147,6 @@ io.sockets.on('connection', function (socket) {
     if(!socket.auth) {
       logger.error('Socket authentication timeout', socket.id);
       logger.debug('Getting subscribed topics of user', socket.username, '...');
-<<<<<<< HEAD
-=======
-
-    // get connection from pool
-    pg.connect(pgConnectionString, function(err, client, done) {
-    
-      // on database connection failure
-      if(err){
-        logger.error('Cannot connect to PostgreSQL');
-        logger.error(err);
-        done();
-        process.exit(-1);
-      }
-
-      userTopics(client, socket.user_id, logger, function(topics) {
-
-        done();
-
-        logger.info('Got topics from API', topics);
-
-        for (var i = 0; i < topics.length; i++) {
-
-          // get topic id
-          var topicid = topics[i].topic_id;
-          var topic_keyspace = 'topic' + topicid;
-
-          // socket.leave('topic' + topicid);
-          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
-        }
-      });
-
->>>>>>> 4aa75aa91faca871e4114397821857b649a9479c
       socket.disconnect();
     }
   }, 3000);
