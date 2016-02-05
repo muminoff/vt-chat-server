@@ -2,7 +2,7 @@
 
 ## How to install
 
-For running project on your machine, be sure to install Node.js >= 5.2.0 version
+For running project on your machine, be sure to install Node.js >= 4.2.0 version
 
 ```
 $ npm install
