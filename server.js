@@ -271,11 +271,11 @@ io.sockets.on('connection', function (socket) {
   });
 
   // topic unsubscribe api
-  socket.on('topicunsubscribe_request', function(data) {
+  socket.on('topic_events', function(data) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('topic_events', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
