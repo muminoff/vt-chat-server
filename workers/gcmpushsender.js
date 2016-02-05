@@ -8,7 +8,7 @@ var gcm = require('node-gcm');
 var pg = require('pg').native;
 
 // get main config
-var config = require('../utils/config');
+var config = require('../lib/config');
 
 // set logger
 var logger = require('../logger');

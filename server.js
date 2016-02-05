@@ -17,7 +17,7 @@ var async = require('async');
 
 // logger and config
 var logger = require('./logger');
-var config = require('./utils/config');
+var config = require('./lib/config');
 
 // set log level from config
 logger.level = config.log_level;

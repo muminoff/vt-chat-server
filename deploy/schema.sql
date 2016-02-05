@@ -71,6 +71,40 @@ $$;
 ALTER FUNCTION public.generate_token() OWNER TO vt;
 
 --
+-- Name: member_joins_topic_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION member_joins_topic_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('topic_id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.member_joins_topic_notify() OWNER TO vt;
+
+--
+-- Name: member_leaves_topic_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION member_leaves_topic_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('topic_id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
+  RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION public.member_leaves_topic_notify() OWNER TO vt;
+
+--
 -- Name: message_create_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -80,13 +114,13 @@ CREATE FUNCTION message_create_notify() RETURNS trigger
 DECLARE
 BEGIN
   IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'sender', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'sender', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'sender', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'is_media', OLD.is_media, 'media_type', OLD.media_type, 'media_path', OLD.media_path, 'media_name', OLD.media_name, 'media_size', OLD.media_size))::text);
     RETURN OLD;
   END IF;
   RETURN NEW;
@@ -143,6 +177,27 @@ $$;
 ALTER FUNCTION public.on_user_create_subscribe_all() OWNER TO vt;
 
 --
+-- Name: topic_close_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_close_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.closed = OLD.closed) THEN
+    NEW.closed_at = now() at time zone 'utc';
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'closed', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_close_notify() OWNER TO vt;
+
+--
 -- Name: topic_create_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -151,22 +206,53 @@ CREATE FUNCTION topic_create_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
-    RETURN NEW;
-  ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'solved', NEW.solved, 'archived', NEW.archived, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8))::text);
-    RETURN NEW;
-  ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('topic_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'title', OLD.title, 'body', OLD.body, 'parent_room', OLD.parent_room, 'solved', OLD.solved, 'archived', OLD.archived, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'attrs', OLD.attrs, 'created_at', (extract(epoch from OLD.created_at) * 1000)::int8))::text);
-    RETURN OLD;
-  END IF;
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'created', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
   RETURN NEW;
 END;
 $$;
 
 
 ALTER FUNCTION public.topic_create_notify() OWNER TO vt;
+
+--
+-- Name: topic_move_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_move_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.parent_room = OLD.parent_room) THEN
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'moved', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_move_notify() OWNER TO vt;
+
+--
+-- Name: topic_update_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_update_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+   IF NOT (NEW.title = OLD.title) OR NOT (NEW.body = OLD.body) OR NOT (NEW.attrs = OLD.attrs) THEN
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_update_notify() OWNER TO vt;
 
 --
 -- Name: update_modified_column(); Type: FUNCTION; Schema: public; Owner: vt
@@ -236,14 +322,16 @@ CREATE TABLE messages (
     id bigint NOT NULL,
     stamp_id text,
     topic_id bigint NOT NULL,
-    sender bigint NOT NULL,
+    owner bigint NOT NULL,
     reply_to bigint,
     body text NOT NULL,
     attrs jsonb,
     sent_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
     is_media boolean DEFAULT false,
     media_type character varying(5) DEFAULT ''::character varying,
-    media_path text
+    media_path text,
+    media_name text,
+    media_size bigint
 );
 
 
@@ -314,8 +402,7 @@ ALTER SEQUENCE rooms_id_seq OWNED BY rooms.id;
 CREATE TABLE subscribers (
     topic_id bigint NOT NULL,
     user_id bigint NOT NULL,
-    subscribed_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
-    moderator boolean DEFAULT false
+    subscribed_at timestamp without time zone DEFAULT timezone('utc'::text, now())
 );
 
 
@@ -365,11 +452,13 @@ CREATE TABLE topics (
     title character varying(32) NOT NULL,
     body text,
     parent_room bigint NOT NULL,
-    solved boolean DEFAULT false,
+    closed boolean DEFAULT false,
     archived boolean DEFAULT false,
     owner bigint NOT NULL,
     attrs jsonb,
-    created_at timestamp without time zone DEFAULT timezone('utc'::text, now())
+    created_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
+    closed_at timestamp without time zone,
+    archived_at timestamp without time zone
 );
 
 
@@ -569,7 +658,7 @@ CREATE INDEX topics_id_idx ON topics USING btree (id) WHERE (archived IS NOT TRU
 -- Name: topics_id_idx1; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX topics_id_idx1 ON topics USING btree (id) WHERE (solved IS NOT TRUE);
+CREATE INDEX topics_id_idx1 ON topics USING btree (id) WHERE (closed IS NOT TRUE);
 
 
 --
@@ -601,6 +690,20 @@ CREATE TRIGGER trig_generate_token AFTER INSERT ON users FOR EACH ROW EXECUTE PR
 
 
 --
+-- Name: trig_member_joins_topic_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_member_joins_topic_notify AFTER INSERT ON subscribers FOR EACH ROW EXECUTE PROCEDURE member_joins_topic_notify();
+
+
+--
+-- Name: trig_member_leaves_topic_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_member_leaves_topic_notify BEFORE DELETE ON subscribers FOR EACH ROW EXECUTE PROCEDURE member_leaves_topic_notify();
+
+
+--
 -- Name: trig_message_create_notify; Type: TRIGGER; Schema: public; Owner: vt
 --
 
@@ -622,10 +725,31 @@ CREATE TRIGGER trig_on_user_create_subscribe_all AFTER INSERT ON users FOR EACH 
 
 
 --
+-- Name: trig_topic_close_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_close_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_close_notify();
+
+
+--
 -- Name: trig_topic_create_notify; Type: TRIGGER; Schema: public; Owner: vt
 --
 
 CREATE TRIGGER trig_topic_create_notify AFTER INSERT ON topics FOR EACH ROW EXECUTE PROCEDURE topic_create_notify();
+
+
+--
+-- Name: trig_topic_move_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_move_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_move_notify();
+
+
+--
+-- Name: trig_topic_update_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_update_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_update_notify();
 
 
 --
@@ -664,7 +788,7 @@ ALTER TABLE ONLY messages
 --
 
 ALTER TABLE ONLY messages
-    ADD CONSTRAINT messages_sender_fkey FOREIGN KEY (sender) REFERENCES users(id);
+    ADD CONSTRAINT messages_sender_fkey FOREIGN KEY (owner) REFERENCES users(id);
 
 
 --
