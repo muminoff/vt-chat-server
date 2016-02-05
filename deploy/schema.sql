@@ -281,11 +281,7 @@ CREATE TABLE messages (
     body text NOT NULL,
     attrs jsonb,
     sent_at timestamp without time zone DEFAULT timezone('utc'::text, now()),
-    is_media boolean DEFAULT false,
-    media_type character varying(5) DEFAULT ''::character varying,
-    media_path text,
-    media_name text,
-    media_size bigint
+    has_media boolean DEFAULT false
 );
 
 

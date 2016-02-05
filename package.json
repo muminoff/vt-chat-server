@@ -29,6 +29,7 @@
     "body-parser": "^1.14.2",
     "express": "^4.13.3",
     "js-yaml": "^3.4.6",
+    "lodash": "^4.2.1",
     "node-gcm": "^0.13.0",
     "pg": "^4.4.3",
     "pg-hstore": "^2.3.2",
