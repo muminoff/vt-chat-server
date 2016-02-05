@@ -116,7 +116,7 @@ io.sockets.on('connection', function (socket) {
           logger.debug('Getting subscribed topics of user', socket.username, '...');
 
           userTopics(client, socket.user_id, logger, function(topics) {
-            logger.info('Got response from API', topics);
+            logger.info('Got topics from API', topics);
             for (var i = 0; i < topics.length; i++) {
               
               // get topic id
@@ -163,7 +163,7 @@ io.sockets.on('connection', function (socket) {
 
         done();
 
-        logger.info('Got response from API', topics);
+        logger.info('Got topics from API', topics);
 
         for (var i = 0; i < topics.length; i++) {
 
@@ -359,7 +359,7 @@ io.sockets.on('connection', function (socket) {
 
         done();
 
-        logger.info('Got response from API', topics);
+        logger.info('Got topics from API', topics);
 
         for (var i = 0; i < topics.length; i++) {
 
