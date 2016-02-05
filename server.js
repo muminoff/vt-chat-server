@@ -23,7 +23,8 @@ var config = require('./utils/config');
 logger.level = config.log_level;
 
 // db pool size
-pg.defaults.poolSize = config.postgresql.pool_size;
+pg.defaults.poolSize = 100;
+pg.defaults.poolIdleTimeout = 10000;
 
 // variables
 var pgUsername = config.postgresql.user;
@@ -183,11 +184,11 @@ io.sockets.on('connection', function (socket) {
   }, 1000);
 
   // topic message api
-  socket.on('topic_message', function(data) {
+  socket.on('message_events', function(data) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topic_message', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('message_events', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -214,7 +215,7 @@ io.sockets.on('connection', function (socket) {
     }
 
     if(typeof(data.is_media) === 'undefined') {
-      var is_media = null;
+      var is_media = false;
     } else {
       var is_media = data.is_media;
     }
@@ -232,6 +233,18 @@ io.sockets.on('connection', function (socket) {
       var media_path = data.media_path;
     }
 
+    if(typeof(data.media_name) === 'undefined') {
+      var media_name = null;
+    } else {
+      var media_name = data.media_name;
+    }
+
+    if(typeof(data.media_size) === 'undefined') {
+      var media_size = null;
+    } else {
+      var media_size = data.media_size;
+    }
+
     logger.info('Message came from topic', topic_id, 'with data', data);
     logger.debug('Saving message to DB');
 
@@ -246,11 +259,11 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, is_media, media_type, media_path, logger, function(msg) {
+      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, is_media, media_type, media_path, media_name, media_size, logger, function(msg) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
-        io.sockets.in('topic' + topic_id).emit('topic_message', msg);
+        io.sockets.in('topic' + topic_id).emit('message_events', msg);
       });
 
     });
@@ -258,11 +271,11 @@ io.sockets.on('connection', function (socket) {
   });
 
   // topic unsubscribe api
-  socket.on('topicunsubscribe_request', function(data) {
+  socket.on('topic_events', function(data) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('topic_events', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -300,8 +313,6 @@ io.sockets.on('connection', function (socket) {
           socket.emit('topicunsubscribe_response', { status: 'fail' });
         }
 
-        // Broadcast topic event to all including this socket
-        io.emit('topic_events', { event_type: 'unsubscribed', topic_id: topic_id, user: { id: socket.user_id } });
       });
 
     });
@@ -313,7 +324,7 @@ io.sockets.on('connection', function (socket) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('typing_event', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -413,8 +424,10 @@ function joinOnlineSockets(topic_id) {
     if (error) throw error;
     logger.debug('=clients=>', clients);
     clients.forEach(function(s) {
-      logger.debug('Joining', s, 'to', topic_id);
-      io.of('/').sockets[s].join('topic'+topic_id);
+      if(typeof(topic_id)!=='undefined') {
+        logger.debug('Joining', s, 'to', topic_id);
+        io.of('/').sockets[s].join('topic'+topic_id);
+      }
     });
   });
 };
