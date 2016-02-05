@@ -313,8 +313,6 @@ io.sockets.on('connection', function (socket) {
           socket.emit('topicunsubscribe_response', { status: 'fail' });
         }
 
-        // Broadcast topic event to all including this socket
-        io.emit('topic_events', { event_type: 'unsubscribed', topic_id: topic_id, user: { id: socket.user_id } });
       });
 
     });
@@ -326,7 +324,7 @@ io.sockets.on('connection', function (socket) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('topicunsubscribe_response', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('typing_event', {'status': 'fail', 'detail': 'not-authenticated'});
       socket.disconnect();
       return;
     }
