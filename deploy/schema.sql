@@ -79,7 +79,7 @@ CREATE FUNCTION member_joins_topic_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('topic_id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
   RETURN NEW;
 END;
 $$;
@@ -96,7 +96,7 @@ CREATE FUNCTION member_leaves_topic_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('topic_id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
   RETURN OLD;
 END;
 $$;
