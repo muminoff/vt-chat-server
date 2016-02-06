@@ -8,9 +8,9 @@ var pg = require('pg');
 var redis = require('redis');
 
 // turn on the radar to catch errors
-var raven = require('raven');
-var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
-radar.patchGlobal();
+// var raven = require('raven');
+// var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
+// radar.patchGlobal();
 
 // async, raging ocean waves
 var async = require('async');
@@ -64,7 +64,7 @@ var topicUnsubscribe = require('./lib/topicunsubscribe');
 
 logger.info('Connected to PostgreSQL');
 
-var onlineSockets = [];
+var online_sockets = [];
 
 // on socket connection
 io.sockets.on('connection', function (socket) {
@@ -111,7 +111,7 @@ io.sockets.on('connection', function (socket) {
 
           logger.info('User ' + socket.user_id + ' authenticated');
           socket.emit('signin_response', {status: 'ok'});
-          onlineSockets.push(socket);
+          online_sockets.push(socket);
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
 
@@ -182,10 +182,10 @@ io.sockets.on('connection', function (socket) {
       var attrs = data.attrs;
     }
 
-    if(typeof(data.is_media) === 'undefined') {
-      var is_media = false;
+    if(typeof(data.has_media) === 'undefined') {
+      var has_media = false;
     } else {
-      var is_media = data.is_media;
+      var has_media = data.has_media;
     }
 
     if(typeof(data.media_type) === 'undefined') {
@@ -227,60 +227,11 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, is_media, media_type, media_path, media_name, media_size, logger, function(msg) {
+      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, has_media, logger, function(msg) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('message_events', msg);
-      });
-
-    });
-
-  });
-
-  // topic unsubscribe api
-  socket.on('topic_events', function(data) {
-
-    // if socket not authenticated
-    if(!socket.auth) {
-      socket.emit('topic_events', {'status': 'fail', 'detail': 'not-authenticated'});
-      socket.disconnect();
-      return;
-    }
-
-    logger.info('User ' + socket.user_id + ' asks for topic unsubscribe');
-
-    // if topic id not given
-    if(typeof(data.topic_id) === 'undefined') {
-      socket.emit('topic_events', {status: 'fail', detail: 'topic_id not given'});
-    }
-
-    var topic_id = data.topic_id;
-
-    // get connection from pool
-    pg.connect(pgConnectionString, function(err, client, done) {
-
-      // on database connection failure
-      if(err){
-        logger.error('Cannot connect to PostgreSQL');
-        logger.error(err);
-        done();
-        process.exit(-1);
-      }
-
-      // unsubscribe user from topic and send response
-      topicUnsubscribe(client, socket.user_id, topic_id, logger, function(success){
-
-        done();
-
-        logger.debug('Sending ->', resp);
-
-        if(success) {
-          socket.emit('topic_events', { status: 'ok', topic_id: topic_id, user: { id: socket.user_id }});
-        } else {
-          socket.emit('topic_events', { status: 'fail' });
-        }
-
       });
 
     });
@@ -311,39 +262,7 @@ io.sockets.on('connection', function (socket) {
 
   // Client disconnected 
   socket.on('disconnect', function(){
-
-    // get connection from pool
-    pg.connect(pgConnectionString, function(err, client, done) {
-    
-      // on database connection failure
-      if(err){
-        logger.error('Cannot connect to PostgreSQL');
-        logger.error(err);
-        done();
-        process.exit(-1);
-      }
-
-      userTopics(client, socket.user_id, logger, function(topics) {
-
-        done();
-
-        logger.info('Got topics from API', topics);
-
-        for (var i = 0; i < topics.length; i++) {
-
-          // get topic id
-          var topicid = topics[i].topic_id;
-          var topic_keyspace = 'topic' + topicid;
-
-          // socket.leave('topic' + topicid);
-          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
-        }
-      });
-
-      socket.disconnect();
-
-    });
+    online_sockets.splice(online_sockets.indexOf(socket), 1);
 
     logger.info('Client disconnected', socket.id);
     if(typeof(socket.user_id) !== 'undefined') {
@@ -351,6 +270,39 @@ io.sockets.on('connection', function (socket) {
       logger.info('Client username was', socket.username);
     }
     delete socket;
+
+    // get connection from pool
+    // pg.connect(pgConnectionString, function(err, client, done) {
+    
+      // on database connection failure
+      // if(err){
+      //   logger.error('Cannot connect to PostgreSQL');
+      //   logger.error(err);
+      //   done();
+      //   process.exit(-1);
+      // }
+
+      // FIXME: only subscribed topics, not all
+      // userTopics(client, socket.user_id, logger, function(topics) {
+
+      //   done();
+
+      //   logger.info('Got topics from API', topics);
+
+      //   for (var i = 0; i < topics.length; i++) {
+
+      //     // get topic id
+      //     var topicid = topics[i].topic_id;
+      //     var topic_keyspace = 'topic' + topicid;
+
+      //     // socket.leave('topic' + topicid);
+      //     logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+      //     if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
+      //   }
+      // });
+
+
+    // });
   });
 
 }); // io connection end
@@ -372,33 +324,61 @@ pgClient.connect(function(err) {
 
   pgClient.on('notification', function(data) {
     switch (data.channel) {
-    case 'topic_events':
-      logger.info('New topic event fired, pid %d', data.processId);
-      var topic_data = JSON.parse(data.payload);
-      logger.debug('trigger sent ->', JSON.stringify(topic_data));
-      joinOnlineSockets(topic_data.data.id);
-      io.emit('topic_events', topic_data);
-      break;
-    default:
-      logger.warn('Some event fired in DB');
+      case 'topic_events':
+        logger.info('New topic event fired, pid %d', data.processId);
+        var topic_data = JSON.parse(data.payload);
+        logger.debug('trigger sent ->', JSON.stringify(topic_data));
+        detectEvent(topic_data.event_type, topic_data.data);
+        // joinOnlineSockets(topic_data.data.id);
+        io.emit('topic_events', topic_data);
+        break;
+      default:
+        logger.warn('Some event fired in DB');
     }
   });
 
 });
 
-function joinOnlineSockets(topic_id) {
-  logger.debug('Going to join sockets into topic', topic_id);
-  io.of('/').clients(function(error, clients) {
-    if (error) throw error;
-    logger.debug('=clients=>', clients);
-    clients.forEach(function(s) {
-      if(typeof(topic_id)!=='undefined') {
-        logger.debug('Joining', s, 'to', topic_id);
-        io.of('/').sockets[s].join('topic'+topic_id);
-      }
-    });
-  });
-};
+function detectEvent(event_type, data) {
+  logger.debug('Event detected', event_type);
+  logger.debug('Sockets ->', online_sockets.length);
+  switch (event_type) {
+    case 'joined': 
+      logger.debug('User', data.user.username, 'joined topic', data.topic_id);
+      online_sockets.forEach(function(s) {
+        if(parseInt(s.user_id)===data.user.id) {
+          logger.debug(data.user.username, 'found in local socket, joining to topic', data.topic_id, '...');
+          s.join('topic' + data.topic_id);
+        }
+      });
+      break;
+    case 'left':
+      logger.debug('User', data.user.username, 'left topic', data.topic_id);
+      online_sockets.forEach(function(s) {
+        if(parseInt(s.user_id)===data.user.id) {
+          logger.debug(data.user.username, 'found in local socket, joining to topic', data.topic_id, '...');
+          s.leave('topic' + data.topic_id);
+        }
+      });
+      break;
+    default:
+      logger.warn('Other event fired in DB');
+  }
+}
+
+// function joinOnlineSockets(topic_id) {
+//   logger.debug('Going to join sockets into topic', topic_id);
+//   io.of('/').clients(function(error, clients) {
+//     if (error) throw error;
+//     logger.debug('=clients=>', clients);
+//     clients.forEach(function(s) {
+//       if(typeof(topic_id)!=='undefined') {
+//         logger.debug('Joining', s, 'to', topic_id);
+//         io.of('/').sockets[s].join('topic'+topic_id);
+//       }
+//     });
+//   });
+// };
 
 server.listen(port, host, function () {
   logger.info('Server listening at %s:%d', host, port);

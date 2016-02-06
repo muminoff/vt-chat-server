@@ -53,7 +53,7 @@ pg.connect(pgConnectionString, function(err, client, done) {
     return item.id;
   }
 
-  userTopics(client, logger, function(err, result) {
+  userTopics(client, 1, logger, function(err, result) {
     var topic_ids = _.map(result, get_topic_id);
     logger.debug('topic ids ->', topic_ids);
   });
