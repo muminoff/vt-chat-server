@@ -124,8 +124,8 @@ io.sockets.on('connection', function (socket) {
               var topic_keyspace = 'topic' + topicid;
 
               // join user to topic
-              socket.join('topic' + topicid);
-              logger.debug('User', socket.username, 'has now joined to topic', topicid);
+              socket.join(topic_keyspace);
+              logger.debug('User', socket.username, 'has now joined to topic', topic_keyspace);
               logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
               if(socket.device_type !== 'linux')redisClient.srem(topic_keyspace, socket.gcm_token);
             }
@@ -344,20 +344,20 @@ function detectEvent(event_type, data) {
   logger.debug('Sockets ->', online_sockets.length);
   switch (event_type) {
     case 'joined': 
-      logger.debug('User', data.user.username, 'joined topic', data.topic_id);
+      logger.debug('User', data.user.username, 'joined topic', data.id);
       online_sockets.forEach(function(s) {
         if(parseInt(s.user_id)===data.user.id) {
-          logger.debug(data.user.username, 'found in local socket, joining to topic', data.topic_id, '...');
-          s.join('topic' + data.topic_id);
+          logger.debug(data.user.username, 'found in local socket, joining to topic', data.id, '...');
+          s.join('topic' + data.id);
         }
       });
       break;
     case 'left':
-      logger.debug('User', data.user.username, 'left topic', data.topic_id);
+      logger.debug('User', data.user.username, 'left topic', data.id);
       online_sockets.forEach(function(s) {
         if(parseInt(s.user_id)===data.user.id) {
-          logger.debug(data.user.username, 'found in local socket, joining to topic', data.topic_id, '...');
-          s.leave('topic' + data.topic_id);
+          logger.debug(data.user.username, 'found in local socket, leaving topic', data.id, '...');
+          s.leave('topic' + data.id);
         }
       });
       break;
