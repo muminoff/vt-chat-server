@@ -84,10 +84,10 @@ function detectTopicEvent(event_type, data) {
   logger.debug('Topic detected', event_type);
   switch (event_type) {
     case 'joined': 
-      logger.debug('User', data.user.username, 'joined topic', data.topic_id);
+      logger.debug('User', data.user.username, 'joined topic', data.id);
       break;
     case 'left':
-      logger.debug('User', data.user.username, 'left topic', data.topic_id);
+      logger.debug('User', data.user.username, 'left topic', data.id);
       break;
     default:
       logger.warn('Other event fired in DB');

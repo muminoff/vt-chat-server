@@ -188,31 +188,6 @@ io.sockets.on('connection', function (socket) {
       var has_media = data.has_media;
     }
 
-    if(typeof(data.media_type) === 'undefined') {
-      var media_type = null;
-    } else {
-      var media_type = data.media_type;
-    }
-
-
-    if(typeof(data.media_path) === 'undefined') {
-      var media_path = null;
-    } else {
-      var media_path = data.media_path;
-    }
-
-    if(typeof(data.media_name) === 'undefined') {
-      var media_name = null;
-    } else {
-      var media_name = data.media_name;
-    }
-
-    if(typeof(data.media_size) === 'undefined') {
-      var media_size = null;
-    } else {
-      var media_size = data.media_size;
-    }
-
     logger.info('Message came from topic', topic_id, 'with data', data);
     logger.debug('Saving message to DB');
 
