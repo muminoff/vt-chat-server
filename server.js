@@ -255,8 +255,12 @@ io.sockets.on('connection', function (socket) {
       socket.emit('typing_event', {status: 'fail', detail: 'topic_id not given'});
     }
 
+    if(typeof(data.username) === 'undefined') {
+      socket.emit('typing_event', {status: 'fail', detail: 'username not given'});
+    }
     var topic_id = data.topic_id;
-    io.sockets.in('topic' + topic_id).emit('typing_event', { topic: topic_id, user: socket.user_id });
+    io.sockets.in('topic' + topic_id).emit('typing_event', data);
+    // socket.emit('typing_event', data);
 
   });
 
