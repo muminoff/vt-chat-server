@@ -59,7 +59,6 @@ redisClient.on('connect', function() {
 var signinUser = require('./lib/signin');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
-var topicUnsubscribe = require('./lib/topicunsubscribe');
 
 
 logger.info('Connected to PostgreSQL');

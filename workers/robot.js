@@ -61,8 +61,8 @@ socket.on('connect', function(){
     pgClient.on('notification', function(data) {
       switch (data.channel) {
         case 'message_events':
-          logger.info('New message event fired');
-          logger.info(data.payload);
+          // logger.info('New message event fired');
+          // logger.info(data.payload);
           break;
         case 'topic_events':
           logger.info('New topic event fired');
