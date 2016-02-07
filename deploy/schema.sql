@@ -79,7 +79,7 @@ CREATE FUNCTION member_joins_topic_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('topic_id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'joined', 'data', json_build_object('id', NEW.topic_id, 'user', json_build_object('id', NEW.user_id, 'username', (SELECT username FROM users WHERE id=NEW.user_id)::text), 'subscribed_at', (extract(epoch from NEW.subscribed_at) * 1000)::int8))::text);
   RETURN NEW;
 END;
 $$;
@@ -96,7 +96,7 @@ CREATE FUNCTION member_leaves_topic_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('topic_id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
+  PERFORM pg_notify('topic_events', json_build_object('event_type', 'left', 'data', json_build_object('id', OLD.topic_id, 'user', json_build_object('id', OLD.user_id, 'username', (SELECT username FROM users WHERE id=OLD.user_id)::text), 'subscribed_at', (extract(epoch from OLD.subscribed_at) * 1000)::int8))::text);
   RETURN OLD;
 END;
 $$;
@@ -114,13 +114,13 @@ CREATE FUNCTION message_create_notify() RETURNS trigger
 DECLARE
 BEGIN
   IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'has_media', NEW.has_media))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'is_media', NEW.is_media, 'media_type', NEW.media_type, 'media_path', NEW.media_path, 'media_name', NEW.media_name, 'media_size', NEW.media_size))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'has_media', NEW.has_media))::text);
     RETURN NEW;
   ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'is_media', OLD.is_media, 'media_type', OLD.media_type, 'media_path', OLD.media_path, 'media_name', OLD.media_name, 'media_size', OLD.media_size))::text);
+    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'has_media', OLD.has_media))::text);
     RETURN OLD;
   END IF;
   RETURN NEW;
@@ -551,6 +551,14 @@ ALTER TABLE ONLY rooms
 
 
 --
+-- Name: subscribers_pkey; Type: CONSTRAINT; Schema: public; Owner: vt; Tablespace: 
+--
+
+ALTER TABLE ONLY subscribers
+    ADD CONSTRAINT subscribers_pkey PRIMARY KEY (topic_id, user_id);
+
+
+--
 -- Name: tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: vt; Tablespace: 
 --
 
@@ -741,22 +749,6 @@ ALTER TABLE ONLY messages
 
 ALTER TABLE ONLY rooms
     ADD CONSTRAINT rooms_owner_fkey FOREIGN KEY (owner) REFERENCES users(id);
-
-
---
--- Name: subscribers_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vt
---
-
-ALTER TABLE ONLY subscribers
-    ADD CONSTRAINT subscribers_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES topics(id);
-
-
---
--- Name: subscribers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vt
---
-
-ALTER TABLE ONLY subscribers
-    ADD CONSTRAINT subscribers_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --
