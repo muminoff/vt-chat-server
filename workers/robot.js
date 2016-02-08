@@ -35,7 +35,7 @@ var pgClient = new pg.Client(pgConnectionString);
 
 socket.on('connect', function(){
   console.log('Connected to socket.io server');
-  socket.emit('signin_request', {'token': '53415178f317452eb244df678722fc10'});
+  socket.emit('signin_request', {'token': '99fc72497b1a435a89d200905a5cdc59'});
 
   pgClient.connect(function(err) {
 
