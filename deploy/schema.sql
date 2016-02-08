@@ -173,6 +173,27 @@ $$;
 ALTER FUNCTION public.topic_create_notify() OWNER TO vt;
 
 --
+-- Name: topic_delete_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION topic_delete_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  IF NOT (NEW.archived = OLD.archived) AND (OLD.archived=false) AND (NEW.archived=true) THEN
+    NEW.archived_at = now() at time zone 'utc';
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.topic_delete_notify() OWNER TO vt;
+
+--
 -- Name: topic_move_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -684,6 +705,13 @@ CREATE TRIGGER trig_topic_close_notify BEFORE UPDATE ON topics FOR EACH ROW EXEC
 --
 
 CREATE TRIGGER trig_topic_create_notify AFTER INSERT ON topics FOR EACH ROW EXECUTE PROCEDURE topic_create_notify();
+
+
+--
+-- Name: trig_topic_delete_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_topic_delete_notify BEFORE UPDATE ON topics FOR EACH ROW EXECUTE PROCEDURE topic_delete_notify();
 
 
 --
