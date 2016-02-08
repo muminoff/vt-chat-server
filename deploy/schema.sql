@@ -139,9 +139,13 @@ CREATE FUNCTION topic_close_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-   IF NOT (NEW.closed = OLD.closed) THEN
+  IF NOT (NEW.closed = OLD.closed) AND (OLD.closed=false) AND (NEW.closed=true) THEN
     NEW.closed_at = now() at time zone 'utc';
     PERFORM pg_notify('topic_events', json_build_object('event_type', 'closed', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', (extract(epoch from NEW.closed_at) * 1000)::int8))::text);
+    RETURN NEW;
+  ELSIF NOT (NEW.closed = OLD.closed) AND (OLD.closed=true) AND (NEW.closed=false) THEN
+    NEW.closed_at = null;
+    PERFORM pg_notify('topic_events', json_build_object('event_type', 'opened', 'data', json_build_object('id', NEW.id, 'title', NEW.title, 'body', NEW.body, 'parent_room', NEW.parent_room, 'closed', NEW.closed, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'attrs', NEW.attrs, 'created_at', (extract(epoch from NEW.created_at) * 1000)::int8, 'closed_at', NEW.closed_at))::text);
     RETURN NEW;
   END IF;
   RETURN NEW;
