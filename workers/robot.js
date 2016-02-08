@@ -69,7 +69,7 @@ socket.on('connect', function(){
           logger.info('Topic event fired');
           logger.debug(data.payload);
           var topic_data = JSON.parse(data.payload);
-          detectTopicEvent(topic_data.event_type, topic_data.data);
+          detectTopicEvent(socket, topic_data.event_type, topic_data.data);
           break;
         default:
           logger.warn('Some event fired');
@@ -80,11 +80,21 @@ socket.on('connect', function(){
 
 });
 
-function detectTopicEvent(event_type, data) {
+function detectTopicEvent(socket, event_type, data) {
   logger.debug('Topic event detected ->', event_type);
   switch (event_type) {
     case 'joined': 
       logger.debug('User', data.user.username, 'joined topic', data.id);
+      var timestamp = new Date().getTime();
+      var message = {
+        stamp_id: data.user.username + ':' + timestamp.toString(),
+        topic_id: data.id,
+        body: data,
+        reply_to: null,
+        attrs: { robot_message: true },
+        has_media: false
+      };
+      socket.emit(data.id, message);
       break;
     case 'left':
       logger.debug('User', data.user.username, 'left topic', data.id);
