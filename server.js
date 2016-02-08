@@ -250,37 +250,37 @@ io.sockets.on('connection', function (socket) {
     delete socket;
 
     // get connection from pool
-    // pg.connect(pgConnectionString, function(err, client, done) {
+    pg.connect(pgConnectionString, function(err, client, done) {
     
       // on database connection failure
-      // if(err){
-      //   logger.error('Cannot connect to PostgreSQL');
-      //   logger.error(err);
-      //   done();
-      //   process.exit(-1);
-      // }
+      if(err){
+        logger.error('Cannot connect to PostgreSQL');
+        logger.error(err);
+        done();
+        process.exit(-1);
+      }
 
       // FIXME: only subscribed topics, not all
-      // userTopics(client, socket.user_id, logger, function(topics) {
+      userTopics(client, socket.user_id, logger, function(topics) {
 
-      //   done();
+        done();
 
-      //   logger.info('Got topics from API', topics);
+        logger.info('Got topics from API', topics);
 
-      //   for (var i = 0; i < topics.length; i++) {
+        for (var i = 0; i < topics.length; i++) {
 
-      //     // get topic id
-      //     var topicid = topics[i].topic_id;
-      //     var topic_keyspace = 'topic' + topicid;
+          // get topic id
+          var topicid = topics[i].topic_id;
+          var topic_keyspace = 'topic' + topicid;
 
-      //     // socket.leave('topic' + topicid);
-      //     logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-      //     if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
-      //   }
-      // });
+          // socket.leave('topic' + topicid);
+          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
+        }
+      });
 
 
-    // });
+    });
   });
 
 }); // io connection end
