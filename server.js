@@ -94,7 +94,7 @@ io.sockets.on('connection', function (socket) {
         logger.error(err);
         done();
         process.exit(-1);
-      } else {
+      }
 
       signinUser(client, token, logger, function(user) {
 
