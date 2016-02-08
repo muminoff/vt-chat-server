@@ -249,7 +249,6 @@ io.sockets.on('connection', function (socket) {
     }
     var topic_id = data.topic_id;
     io.sockets.in('topic' + topic_id).emit('typing_event', data);
-    // socket.emit('typing_event', data);
 
   });
 
@@ -275,7 +274,6 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      // FIXME: only subscribed topics, not all
       userTopics(client, socket.user_id, logger, function(topics) {
 
         done();
@@ -322,7 +320,6 @@ pgClient.connect(function(err) {
         var topic_data = JSON.parse(data.payload);
         logger.debug('trigger sent ->', JSON.stringify(topic_data));
         detectEvent(topic_data.event_type, topic_data.data);
-        // joinOnlineSockets(topic_data.data.id);
         io.emit('topic_events', topic_data);
         break;
       default:
