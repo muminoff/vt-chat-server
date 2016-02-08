@@ -32,10 +32,11 @@ var pgConnectionString =
 var host = process.env.HOST || config.host;
 var port = process.env.PORT || config.port;
 var pgClient = new pg.Client(pgConnectionString);
+var robotToken = process.env.ROBOT_TOKEN || config.robot_token;
 
 socket.on('connect', function(){
   console.log('Connected to socket.io server');
-  socket.emit('signin_request', {'token': '99fc72497b1a435a89d200905a5cdc59'});
+  socket.emit('signin_request', {'token': robotToken});
 
   pgClient.connect(function(err) {
 
@@ -61,18 +62,17 @@ socket.on('connect', function(){
     pgClient.on('notification', function(data) {
       switch (data.channel) {
         case 'message_events':
-          // logger.info('New message event fired');
-          // logger.info(data.payload);
+          logger.info('Message event fired');
+          logger.debug(data.payload);
           break;
         case 'topic_events':
-          logger.info('New topic event fired');
-          logger.info(data.payload);
+          logger.info('Topic event fired');
+          logger.debug(data.payload);
           var topic_data = JSON.parse(data.payload);
-          logger.debug('Trigger received ->', JSON.stringify(topic_data));
           detectTopicEvent(topic_data.event_type, topic_data.data);
           break;
         default:
-          logger.warn('Some event fired in DB');
+          logger.warn('Some event fired');
       }
     });
 
@@ -81,7 +81,7 @@ socket.on('connect', function(){
 });
 
 function detectTopicEvent(event_type, data) {
-  logger.debug('Topic detected', event_type);
+  logger.debug('Topic event detected ->', event_type);
   switch (event_type) {
     case 'joined': 
       logger.debug('User', data.user.username, 'joined topic', data.id);
@@ -90,7 +90,7 @@ function detectTopicEvent(event_type, data) {
       logger.debug('User', data.user.username, 'left topic', data.id);
       break;
     default:
-      logger.warn('Other event fired in DB');
+      logger.warn('Other event fired');
   }
 }
 
