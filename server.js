@@ -8,9 +8,9 @@ var pg = require('pg');
 var redis = require('redis');
 
 // turn on the radar to catch errors
-// var raven = require('raven');
-// var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
-// radar.patchGlobal();
+var raven = require('raven');
+var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
+radar.patchGlobal();
 
 // async, raging ocean waves
 var async = require('async');
@@ -48,30 +48,29 @@ redisClient.on('error', function(err) {
   process.exit(-1);
 });
 
+// redis authentication
 redisClient.select(config.redis.db);
 if(config.redis.auth)redisClient.auth(config.redis.auth);
-
-redisClient.on('connect', function() {
-  logger.info('Connected to Redis');
-});
 
 // api import
 var signinUser = require('./lib/signin');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
 
-
-logger.info('Connected to PostgreSQL');
-
+// sockets
 var online_sockets = [];
 
 // on socket connection
 io.sockets.on('connection', function (socket) {
 
+  // socket is not authenticated by default
   socket.auth = false;
 
+  // get client real ip address
+  remote_addr = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+
   logger.debug('Socket connected', socket.id);
-  logger.debug('Socket address:', socket.handshake.address);
+  logger.debug('Socket address:', remote_addr);
 
   // on authentication
   socket.on('signin_request', function(data) {
@@ -95,7 +94,7 @@ io.sockets.on('connection', function (socket) {
         logger.error(err);
         done();
         process.exit(-1);
-      }
+      } else {
 
       signinUser(client, token, logger, function(user) {
 
@@ -344,20 +343,7 @@ function detectEvent(event_type, data) {
   }
 }
 
-// function joinOnlineSockets(topic_id) {
-//   logger.debug('Going to join sockets into topic', topic_id);
-//   io.of('/').clients(function(error, clients) {
-//     if (error) throw error;
-//     logger.debug('=clients=>', clients);
-//     clients.forEach(function(s) {
-//       if(typeof(topic_id)!=='undefined') {
-//         logger.debug('Joining', s, 'to', topic_id);
-//         io.of('/').sockets[s].join('topic'+topic_id);
-//       }
-//     });
-//   });
-// };
-
+// listen on given host and port
 server.listen(port, host, function () {
   logger.info('Server listening at %s:%d', host, port);
 });
