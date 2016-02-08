@@ -54,6 +54,7 @@ if(config.redis.auth)redisClient.auth(config.redis.auth);
 
 // api import
 var signinUser = require('./lib/signin');
+var allTopics = require('./lib/alltopics');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
 
@@ -130,6 +131,19 @@ io.sockets.on('connection', function (socket) {
               if(socket.device_type !== 'linux')redisClient.srem(topic_keyspace, socket.gcm_token);
             }
           });
+
+          if((socket.roles!==null) && (socket.roles.robot===true)) {
+            logger.debug("Joinning robot", socket.username, "to all topics ...");
+            allTopics(client, logger, function(topics) {
+              logger.info("Got all topics from DB");
+              for(var i=0; i<topics.length; i++) {
+                var topicid = topics[i].id;
+                var topic_keyspace = 'topic' + topicid;
+                socket.join(topic_keyspace);
+                logger.debug("Robot", socket.username, "has now joined to topic", topic_keyspace);
+              }
+            });
+          }
 
         } else {
           logger.error('Invalid token', token);

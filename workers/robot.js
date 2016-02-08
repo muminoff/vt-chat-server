@@ -62,8 +62,8 @@ socket.on('connect', function(){
     pgClient.on('notification', function(data) {
       switch (data.channel) {
         case 'message_events':
-          logger.info('Message event fired');
-          logger.debug(data.payload);
+          // logger.info('Message event fired');
+          // logger.debug(data.payload);
           break;
         case 'topic_events':
           logger.info('Topic event fired');
@@ -89,15 +89,25 @@ function detectTopicEvent(socket, event_type, data) {
       var message = {
         stamp_id: data.user.username + ':' + timestamp.toString(),
         topic_id: data.id,
-        body: data,
+        body: { topic_id: data.id, who: { id: data.user.id, username: data.user.username }, action: 'joined', when: timestamp },
         reply_to: null,
         attrs: { robot_message: true },
         has_media: false
       };
-      socket.emit(data.id, message);
+      socket.emit('message_events', message);
       break;
     case 'left':
       logger.debug('User', data.user.username, 'left topic', data.id);
+      var timestamp = new Date().getTime();
+      var message = {
+        stamp_id: data.user.username + ':' + timestamp.toString(),
+        topic_id: data.id,
+        body: { topic_id: data.id, who: { id: data.user.id, username: data.user.username }, action: 'left', when: timestamp },
+        reply_to: null,
+        attrs: { robot_message: true },
+        has_media: false
+      };
+      socket.emit('message_events', message);
       break;
     default:
       logger.warn('Other event fired');
