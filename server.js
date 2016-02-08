@@ -106,8 +106,10 @@ io.sockets.on('connection', function (socket) {
           socket.username = user.username;
           socket.gcm_token = user.gcm_token;
           socket.device_type = user.device_type;
+          socket.roles = user.roles;
 
           logger.info('User ' + socket.user_id + ' authenticated');
+          logger.info('User roles ->', socket.roles);
           socket.emit('signin_response', {status: 'ok'});
           online_sockets.push(socket);
 
