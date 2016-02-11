@@ -5,7 +5,7 @@
   log_file: "logs/vt.log"
   log_level: "debug" #info, warn, error
   gcm_api_key: "AIzaSyBBaV6nqZtFaQnKzRNK9i_g-jcBU77ji00"
-  robot_token: "99fc72497b1a435a89d200905a5cdc59"
+  robot_token: "446f8da7c5904653bec11557c3416f6f"
   postgresql: 
     host: "vt-db.cgsrhj75wyom.us-west-2.rds.amazonaws.com"
     port: 5432
