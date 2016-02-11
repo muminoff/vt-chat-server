@@ -25,7 +25,7 @@ logger.level = config.log_level;
 
 // db pool size
 pg.defaults.poolSize = 100;
-pg.defaults.poolIdleTimeout = 10000;
+pg.defaults.poolIdleTimeout = 100;
 
 // variables
 var pgUsername = config.postgresql.user;
