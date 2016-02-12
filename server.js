@@ -222,7 +222,11 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      var body_filtered = mat.filter(body);
+      if((socket.roles!==null) && (socket.roles.robot===true)) {
+        var body_filtered = body;
+      } else {
+        var body_filtered = mat.filter(body);
+      }
 
       messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body_filtered, attrs, has_media, logger, function(msg) {
         done();
