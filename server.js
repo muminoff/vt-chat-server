@@ -61,6 +61,7 @@ var signinUser = require('./lib/signin');
 var allTopics = require('./lib/alltopics');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
+var mat = require('./lib/mat');
 
 // sockets
 var online_sockets = [];
@@ -221,7 +222,9 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body, attrs, has_media, logger, function(msg) {
+      var body_filtered = mat.filter(body);
+
+      messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body_filtered, attrs, has_media, logger, function(msg) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
