@@ -116,7 +116,7 @@ io.sockets.on('connection', function (socket) {
 
           logger.info('User ' + socket.user_id + ' authenticated');
           logger.info('User roles ->', socket.roles);
-          socket.emit('signin_response', {status: 'ok'});
+          socket.emit('signin_response', { status: 'ok', roled: user.roles });
           online_sockets.push(socket);
           activity.track(socket.user_id, 'signed_in');
 
