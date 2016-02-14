@@ -326,14 +326,26 @@ pgClient.connect(function(err) {
     logger.info('Listener started for topic_events');
   });
 
+  pgClient.query('LISTEN message_events', function(err, result) {
+    if(err)logger.error('Cannot listen to message_events');
+    logger.info('Listener started for message_events');
+  });
+
   pgClient.on('notification', function(data) {
     switch (data.channel) {
       case 'topic_events':
         logger.info('New topic event fired, pid %d', data.processId);
         var topic_data = JSON.parse(data.payload);
         logger.debug('trigger sent ->', JSON.stringify(topic_data));
-        detectEvent(topic_data.event_type, topic_data.data);
+        detectTopicEvent(topic_data.event_type, topic_data.data);
         io.emit('topic_events', topic_data);
+        break;
+      case 'message_events':
+        logger.info('New message event fired, pid %d', data.processId);
+        var message_data = JSON.parse(data.payload);
+        logger.debug('trigger sent ->', JSON.stringify(message_data));
+        // Broadcast if event_type is "deleted"
+        if(message_data.event_type==='deleted')io.emit('message_events', message_data);
         break;
       default:
         logger.warn('Some event fired in DB');
@@ -342,8 +354,8 @@ pgClient.connect(function(err) {
 
 });
 
-function detectEvent(event_type, data) {
-  logger.debug('Event detected', event_type);
+function detectTopicEvent(event_type, data) {
+  logger.debug('Topic event detected ->', event_type);
   logger.debug('Sockets ->', online_sockets.length);
   switch (event_type) {
     case 'joined': 
@@ -364,6 +376,7 @@ function detectEvent(event_type, data) {
         }
       });
       break;
+    // TODO: Detect topic delete and remove it's subscribers from socket room
     default:
       logger.warn('Other event fired in DB');
   }
