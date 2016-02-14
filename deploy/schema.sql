@@ -113,22 +113,55 @@ CREATE FUNCTION message_create_notify() RETURNS trigger
     AS $$
 DECLARE
 BEGIN
-  IF (TG_OP = 'INSERT') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'has_media', NEW.has_media))::text);
-    RETURN NEW;
-  ELSIF (TG_OP = 'UPDATE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'updated', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'has_media', NEW.has_media))::text);
-    RETURN NEW;
-  ELSIF (TG_OP = 'DELETE') THEN
-    PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'has_media', OLD.has_media))::text);
-    RETURN OLD;
-  END IF;
+  PERFORM pg_notify('message_events', json_build_object('event_type', 'sent', 'data', json_build_object('id', NEW.id, 'stamp_id', NEW.stamp_id, 'topic_id', NEW.topic_id, 'owner', json_build_object('id', NEW.owner, 'username', (SELECT username FROM users WHERE id=NEW.owner)::text), 'reply_to', NEW.reply_to, 'body', NEW.body, 'attrs', NEW.attrs, 'sent_at', (extract(epoch from NEW.sent_at) * 1000)::int8, 'has_media', NEW.has_media))::text);
   RETURN NEW;
 END;
 $$;
 
 
 ALTER FUNCTION public.message_create_notify() OWNER TO vt;
+
+--
+-- Name: message_delete_notify(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION message_delete_notify() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+BEGIN
+  PERFORM pg_notify('message_events', json_build_object('event_type', 'deleted', 'data', json_build_object('id', OLD.id, 'stamp_id', OLD.stamp_id, 'topic_id', OLD.topic_id, 'owner', json_build_object('id', OLD.owner, 'username', (SELECT username FROM users WHERE id=OLD.owner)::text), 'reply_to', OLD.reply_to, 'body', OLD.body, 'attrs', OLD.attrs, 'sent_at', (extract(epoch from OLD.sent_at) * 1000)::int8, 'has_media', OLD.has_media))::text);
+  RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION public.message_delete_notify() OWNER TO vt;
+
+--
+-- Name: random_string(integer); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION random_string(length integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+chars text[] := '{0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}';
+result text := '';
+i integer := 0;
+begin
+  if length < 0 then
+    raise exception 'Given length cannot be less than 0';
+  end if;
+  for i in 1..length loop
+    result := result || chars[1+random()*(array_length(chars, 1)-1)];
+  end loop;
+  return result;
+end;
+$$;
+
+
+ALTER FUNCTION public.random_string(length integer) OWNER TO vt;
 
 --
 -- Name: topic_close_notify(); Type: FUNCTION; Schema: public; Owner: vt
@@ -691,6 +724,13 @@ CREATE TRIGGER trig_member_leaves_topic_notify BEFORE DELETE ON subscribers FOR 
 --
 
 CREATE TRIGGER trig_message_create_notify AFTER INSERT ON messages FOR EACH ROW EXECUTE PROCEDURE message_create_notify();
+
+
+--
+-- Name: trig_message_delete_notify; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_message_delete_notify BEFORE DELETE ON messages FOR EACH ROW EXECUTE PROCEDURE message_delete_notify();
 
 
 --
