@@ -796,7 +796,7 @@ ALTER TABLE ONLY announcements
 --
 
 ALTER TABLE ONLY messages
-    ADD CONSTRAINT messages_reply_to_fkey FOREIGN KEY (reply_to) REFERENCES messages(id);
+    ADD CONSTRAINT messages_reply_to_fkey FOREIGN KEY (reply_to) REFERENCES messages(id) ON DELETE SET NULL;
 
 
 --
