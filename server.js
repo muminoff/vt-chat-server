@@ -344,7 +344,6 @@ pgClient.connect(function(err) {
         logger.info('New message event fired, pid %d', data.processId);
         var message_data = JSON.parse(data.payload);
         logger.debug('trigger sent ->', JSON.stringify(message_data));
-        detectMessageEvent(message_data.event_type, message_data.data);
         // Broadcast if event_type is "deleted"
         if(message_data.event_type==='deleted')io.emit('message_events', message_data);
         break;
