@@ -376,6 +376,7 @@ function detectEvent(event_type, data) {
         }
       });
       break;
+    // TODO: Detect topic delete and remove it's subscribers from socket room
     default:
       logger.warn('Other event fired in DB');
   }
