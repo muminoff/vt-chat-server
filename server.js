@@ -6,7 +6,6 @@ var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var pg = require('pg');
 var redis = require('redis');
-var hau = require('hau');
 
 // turn on the radar to catch errors
 var raven = require('raven');
@@ -52,9 +51,6 @@ redisClient.on('error', function(err) {
 // redis authentication
 redisClient.select(config.redis.db);
 if(config.redis.auth)redisClient.auth(config.redis.auth);
-
-// user analytics
-var activity = hau.createClient(config.redis.port, config.redis.host);
 
 // api import
 var signinUser = require('./lib/signin');
@@ -118,7 +114,6 @@ io.sockets.on('connection', function (socket) {
           logger.info('User roles ->', socket.roles);
           socket.emit('signin_response', { status: 'ok', roles: user.roles });
           online_sockets.push(socket);
-          activity.track(socket.user_id, 'signed_in');
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
 
@@ -233,7 +228,6 @@ io.sockets.on('connection', function (socket) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('message_events', msg);
-        activity.track(socket.user_id, 'sent_message');
       });
 
     });
