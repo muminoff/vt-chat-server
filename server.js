@@ -57,6 +57,7 @@ var signinUser = require('./lib/signin');
 var allTopics = require('./lib/alltopics');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
+var insertUserStatus = require('./lib/insertuserstatus');
 var mat = require('./lib/mat');
 
 // sockets
@@ -320,10 +321,33 @@ io.sockets.on('connection', function (socket) {
     online_sockets.splice(online_sockets.indexOf(socket), 1);
 
     logger.info('Client disconnected', socket.id);
+
     if(typeof(socket.user_id) !== 'undefined') {
+
       logger.info('Client user_id was', socket.user_id);
       logger.info('Client username was', socket.username);
+      logger.info('Setting user seen time to DB ...');
+
+      pg.connect(pgConnectionString, function(err, client, done) {
+
+        // on database connection failure
+        if(err){
+          logger.error('Cannot connect to PostgreSQL');
+          logger.error(err);
+          done();
+          process.exit(-1);
+        }
+
+        insertUserStatus(client, socket.user_id, logger, function(result) {
+      
+          done();
+      
+        });
+
+      });
+
     }
+
     delete socket;
 
     // get connection from pool
