@@ -326,7 +326,6 @@ io.sockets.on('connection', function (socket) {
 
       logger.info('Client user_id was', socket.user_id);
       logger.info('Client username was', socket.username);
-      logger.info('Setting user seen time to DB ...');
 
       pg.connect(pgConnectionString, function(err, client, done) {
 
@@ -344,43 +343,31 @@ io.sockets.on('connection', function (socket) {
       
         });
 
+        userTopics(client, socket.user_id, logger, function(topics) {
+
+          logger.info('Setting user seen time to DB ...');
+          done();
+
+          logger.info('Got topics from API', topics);
+
+          for (var i = 0; i < topics.length; i++) {
+
+            // get topic id
+            var topicid = topics[i].topic_id;
+            var topic_keyspace = 'topic' + topicid;
+
+            // socket.leave('topic' + topicid);
+            logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+            if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
+          }
+        });
+
       });
 
     }
 
     delete socket;
 
-    // get connection from pool
-    pg.connect(pgConnectionString, function(err, client, done) {
-    
-      // on database connection failure
-      if(err){
-        logger.error('Cannot connect to PostgreSQL');
-        logger.error(err);
-        done();
-        process.exit(-1);
-      }
-
-      userTopics(client, socket.user_id, logger, function(topics) {
-
-        done();
-
-        logger.info('Got topics from API', topics);
-
-        for (var i = 0; i < topics.length; i++) {
-
-          // get topic id
-          var topicid = topics[i].topic_id;
-          var topic_keyspace = 'topic' + topicid;
-
-          // socket.leave('topic' + topicid);
-          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
-        }
-      });
-
-
-    });
   });
 
 }); // io connection end
