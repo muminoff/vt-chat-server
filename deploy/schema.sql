@@ -24,6 +24,20 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
+-- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -404,6 +418,18 @@ ALTER SEQUENCE rooms_id_seq OWNED BY rooms.id;
 
 
 --
+-- Name: statuses; Type: TABLE; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE TABLE statuses (
+    user_id bigint NOT NULL,
+    last_seen timestamp without time zone DEFAULT timezone('utc'::text, now())
+);
+
+
+ALTER TABLE statuses OWNER TO vt;
+
+--
 -- Name: subscribers; Type: TABLE; Schema: public; Owner: vt; Tablespace: 
 --
 
@@ -606,6 +632,14 @@ ALTER TABLE ONLY rooms
 
 ALTER TABLE ONLY rooms
     ADD CONSTRAINT rooms_subject_key UNIQUE (subject);
+
+
+--
+-- Name: statuses_user_id_key; Type: CONSTRAINT; Schema: public; Owner: vt; Tablespace: 
+--
+
+ALTER TABLE ONLY statuses
+    ADD CONSTRAINT statuses_user_id_key UNIQUE (user_id);
 
 
 --
@@ -821,6 +855,14 @@ ALTER TABLE ONLY messages
 
 ALTER TABLE ONLY rooms
     ADD CONSTRAINT rooms_owner_fkey FOREIGN KEY (owner) REFERENCES users(id);
+
+
+--
+-- Name: statuses_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vt
+--
+
+ALTER TABLE ONLY statuses
+    ADD CONSTRAINT statuses_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --
