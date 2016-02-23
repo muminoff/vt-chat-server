@@ -6,7 +6,6 @@ var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var pg = require('pg');
 var redis = require('redis');
-var hau = require('hau');
 
 // turn on the radar to catch errors
 var raven = require('raven');
@@ -53,9 +52,6 @@ redisClient.on('error', function(err) {
 redisClient.select(config.redis.db);
 if(config.redis.auth)redisClient.auth(config.redis.auth);
 
-// user analytics
-var activity = hau.createClient(config.redis.port, config.redis.host);
-
 // api import
 var signinUser = require('./lib/signin');
 var allTopics = require('./lib/alltopics');
@@ -86,7 +82,7 @@ io.sockets.on('connection', function (socket) {
       var token = data.token;
     } catch (err) {
       logger.error('No token given for authentication', socket.id);
-      return socket.emit('signin_response', {status: 'fail', detail: 'token not given'});
+      return socket.emit('signin_response', {status: 'fail', data: 'token not given'});
     }
 
     logger.debug('Token ' + token + ' received from socket', socket.id);
@@ -118,7 +114,6 @@ io.sockets.on('connection', function (socket) {
           logger.info('User roles ->', socket.roles);
           socket.emit('signin_response', { status: 'ok', roles: user.roles });
           online_sockets.push(socket);
-          activity.track(socket.user_id, 'signed_in');
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
 
@@ -153,7 +148,7 @@ io.sockets.on('connection', function (socket) {
 
         } else {
           logger.error('Invalid token', token);
-          socket.emit('signin_response', {status: 'fail', detail: 'invalid token'});
+          socket.emit('signin_response', {status: 'fail', data: 'invalid token'});
         }
 
       });
@@ -176,7 +171,7 @@ io.sockets.on('connection', function (socket) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('message_events', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('message_events', {'status': 'fail', 'data': 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -233,7 +228,6 @@ io.sockets.on('connection', function (socket) {
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
         io.sockets.in('topic' + topic_id).emit('message_events', msg);
-        activity.track(socket.user_id, 'sent_message');
       });
 
     });
@@ -245,7 +239,7 @@ io.sockets.on('connection', function (socket) {
 
     // if socket not authenticated
     if(!socket.auth) {
-      socket.emit('typing_event', {'status': 'fail', 'detail': 'not-authenticated'});
+      socket.emit('typing_event', {status: 'fail', data: 'not-authenticated'});
       socket.disconnect();
       return;
     }
@@ -254,14 +248,70 @@ io.sockets.on('connection', function (socket) {
 
     // if topic id not given
     if(typeof(data.topic_id) === 'undefined') {
-      socket.emit('typing_event', {status: 'fail', detail: 'topic_id not given'});
+      socket.emit('typing_event', {status: 'fail', data: 'topic_id not given'});
     }
 
     if(typeof(data.username) === 'undefined') {
-      socket.emit('typing_event', {status: 'fail', detail: 'username not given'});
+      socket.emit('typing_event', {status: 'fail', data: 'username not given'});
     }
     var topic_id = data.topic_id;
     io.sockets.in('topic' + topic_id).emit('typing_event', data);
+
+  });
+
+  // Temporary join topic
+  socket.on('join_topic', function(data) {
+
+    // if socket not authenticated
+    if(!socket.auth) {
+      socket.emit('leave_topic', {status: 'fail', data: 'not-authenticated'});
+      socket.disconnect();
+      return;
+    }
+
+    // if topic id not given
+    if(typeof(data.topic_id) === 'undefined') {
+      socket.emit('join_topic', {status: 'fail', data: 'topic_id not given'});
+    }
+
+    var topic_id = data.topic_id;
+
+    logger.info('User ' + socket.username + ' asks to join topic', topic_id, 'temporary');
+
+    try {
+      socket.join('topic' + topic_id);
+      socket.emit({ status: "ok" })
+    } catch(err) {
+      socket.emit({ status: "fail", data: err })
+    }
+
+  });
+
+  // Temporary leave topic
+  socket.on('leave_topic', function(data) {
+
+    // if socket not authenticated
+    if(!socket.auth) {
+      socket.emit('leave_topic', {status: 'fail', data: 'not-authenticated'});
+      socket.disconnect();
+      return;
+    }
+
+    // if topic id not given
+    if(typeof(data.topic_id) === 'undefined') {
+      socket.emit('leave_topic', {status: 'fail', data: 'topic_id not given'});
+    }
+
+    var topic_id = data.topic_id;
+
+    logger.info('User ' + socket.username + ' asks to leave topic', topic_id, 'temporary');
+
+    try {
+      socket.leave('topic' + topic_id);
+      socket.emit({ status: "ok" })
+    } catch(err) {
+      socket.emit({ status: "fail", data: err })
+    }
 
   });
 
