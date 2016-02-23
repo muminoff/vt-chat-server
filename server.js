@@ -57,6 +57,7 @@ var signinUser = require('./lib/signin');
 var allTopics = require('./lib/alltopics');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
+var insertUserStatus = require('./lib/insertuserstatus');
 var mat = require('./lib/mat');
 
 // sockets
@@ -320,43 +321,53 @@ io.sockets.on('connection', function (socket) {
     online_sockets.splice(online_sockets.indexOf(socket), 1);
 
     logger.info('Client disconnected', socket.id);
+
     if(typeof(socket.user_id) !== 'undefined') {
+
       logger.info('Client user_id was', socket.user_id);
       logger.info('Client username was', socket.username);
-    }
-    delete socket;
 
-    // get connection from pool
-    pg.connect(pgConnectionString, function(err, client, done) {
-    
-      // on database connection failure
-      if(err){
-        logger.error('Cannot connect to PostgreSQL');
-        logger.error(err);
-        done();
-        process.exit(-1);
-      }
+      pg.connect(pgConnectionString, function(err, client, done) {
 
-      userTopics(client, socket.user_id, logger, function(topics) {
-
-        done();
-
-        logger.info('Got topics from API', topics);
-
-        for (var i = 0; i < topics.length; i++) {
-
-          // get topic id
-          var topicid = topics[i].topic_id;
-          var topic_keyspace = 'topic' + topicid;
-
-          // socket.leave('topic' + topicid);
-          logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
-          if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
+        // on database connection failure
+        if(err){
+          logger.error('Cannot connect to PostgreSQL');
+          logger.error(err);
+          done();
+          process.exit(-1);
         }
+
+        insertUserStatus(client, socket.user_id, logger, function(result) {
+      
+          done();
+      
+        });
+
+        userTopics(client, socket.user_id, logger, function(topics) {
+
+          logger.info('Setting user seen time to DB ...');
+          done();
+
+          logger.info('Got topics from API', topics);
+
+          for (var i = 0; i < topics.length; i++) {
+
+            // get topic id
+            var topicid = topics[i].topic_id;
+            var topic_keyspace = 'topic' + topicid;
+
+            // socket.leave('topic' + topicid);
+            logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+            if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
+          }
+        });
+
       });
 
+    }
 
-    });
+    delete socket;
+
   });
 
 }); // io connection end
