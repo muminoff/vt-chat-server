@@ -85,6 +85,23 @@ $$;
 ALTER FUNCTION public.generate_token() OWNER TO vt;
 
 --
+-- Name: insert_initial_user_status(); Type: FUNCTION; Schema: public; Owner: vt
+--
+
+CREATE FUNCTION insert_initial_user_status() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+    insert into statuses("user_id")
+    values(new.id);
+    return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.insert_initial_user_status() OWNER TO vt;
+
+--
 -- Name: member_joins_topic_notify(); Type: FUNCTION; Schema: public; Owner: vt
 --
 
@@ -737,6 +754,13 @@ CREATE INDEX users_expr_idx1 ON users USING btree (((vt ->> 'sticker'::text)));
 --
 
 CREATE TRIGGER trig_generate_token AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE generate_token();
+
+
+--
+-- Name: trig_insert_initial_user_status; Type: TRIGGER; Schema: public; Owner: vt
+--
+
+CREATE TRIGGER trig_insert_initial_user_status AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE insert_initial_user_status();
 
 
 --
