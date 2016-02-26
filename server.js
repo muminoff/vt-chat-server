@@ -449,3 +449,9 @@ function detectTopicEvent(event_type, data) {
 server.listen(port, host, function () {
   logger.info('Server listening at %s:%d', host, port);
 });
+
+// process.on('SIGINT', function() {
+//   logger.warn('Server got shutdown signal');
+//   logger.info('Cleaning redis keyspaces ...');
+//   process.exit(0);
+// });
