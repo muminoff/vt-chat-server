@@ -708,17 +708,17 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: available_topics; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: available_topics_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX available_topics ON topics USING btree (id) WHERE (archived = false);
+CREATE INDEX available_topics_idx ON topics USING btree (id) WHERE (archived = false);
 
 
 --
--- Name: open_topics; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: open_topics_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX open_topics ON topics USING btree (id) WHERE (closed = false);
+CREATE INDEX open_topics_idx ON topics USING btree (id) WHERE (closed = false);
 
 
 --
