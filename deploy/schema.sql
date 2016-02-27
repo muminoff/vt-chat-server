@@ -708,6 +708,20 @@ ALTER TABLE ONLY users
 
 
 --
+-- Name: available_topics; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX available_topics ON topics USING btree (id) WHERE (archived = false);
+
+
+--
+-- Name: open_topics; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX open_topics ON topics USING btree (id) WHERE (closed = false);
+
+
+--
 -- Name: trig_generate_token; Type: TRIGGER; Schema: public; Owner: vt
 --
 
