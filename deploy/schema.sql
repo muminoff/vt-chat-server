@@ -785,10 +785,10 @@ CREATE TRIGGER trig_topic_update_notify BEFORE UPDATE ON topics FOR EACH ROW EXE
 
 
 --
--- Name: update_modified_column_trigger; Type: TRIGGER; Schema: public; Owner: vt
+-- Name: trig_update_modified_column; Type: TRIGGER; Schema: public; Owner: vt
 --
 
-CREATE TRIGGER update_modified_column_trigger BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+CREATE TRIGGER trig_update_modified_column BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 
 --
