@@ -722,6 +722,20 @@ CREATE INDEX open_topics_idx ON topics USING btree (id) WHERE (closed = false);
 
 
 --
+-- Name: users_phone_number_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX users_phone_number_idx ON users USING btree (phone_number);
+
+
+--
+-- Name: users_username_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX users_username_idx ON users USING btree (username);
+
+
+--
 -- Name: trig_generate_token; Type: TRIGGER; Schema: public; Owner: vt
 --
 
