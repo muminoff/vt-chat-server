@@ -58,7 +58,7 @@ var allTopics = require('./lib/alltopics');
 var userTopics = require('./lib/usertopics');
 var messageSave = require('./lib/messagesave');
 var insertUserStatus = require('./lib/insertuserstatus');
-var mat = require('./lib/mat');
+// var mat = require('./lib/mat');
 
 // sockets
 var online_sockets = [];
@@ -128,8 +128,8 @@ io.sockets.on('connection', function (socket) {
 
               // join user to topic
               socket.join(topic_keyspace);
-              logger.debug('User', socket.username, 'has now joined to topic', topic_keyspace);
-              logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
+              // logger.debug('User', socket.username, 'has now joined to topic', topic_keyspace);
+              // logger.debug('Removing offline mode in GCM worker keyspace', topic_keyspace);
               if(socket.device_type !== 'linux')redisClient.srem(topic_keyspace, socket.gcm_token);
             }
           });
@@ -218,11 +218,13 @@ io.sockets.on('connection', function (socket) {
         process.exit(-1);
       }
 
-      if((socket.roles!==null) && (socket.roles.robot===true)) {
-        var body_filtered = body;
-      } else {
-        var body_filtered = mat.filter(body);
-      }
+      // if((socket.roles!==null) && (socket.roles.robot===true)) {
+      //   var body_filtered = body;
+      // } else {
+      //   var body_filtered = mat.filter(body);
+      // }
+      
+      var body_filtered = body;
 
       messageSave(client, stamp_id, topic_id, socket.user_id, reply_to, body_filtered, attrs, has_media, logger, function(msg) {
         done();
@@ -245,7 +247,7 @@ io.sockets.on('connection', function (socket) {
       return;
     }
 
-    logger.info('User ' + socket.username + ' informs typing_event');
+    // logger.info('User ' + socket.username + ' informs typing_event');
 
     // if topic id not given
     if(typeof(data.topic_id) === 'undefined') {
@@ -357,7 +359,7 @@ io.sockets.on('connection', function (socket) {
             var topic_keyspace = 'topic' + topicid;
 
             // socket.leave('topic' + topicid);
-            logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
+            // logger.debug('Adding offline mode in GCM worker keyspace', topic_keyspace);
             if(socket.device_type !== 'linux')redisClient.sadd(topic_keyspace, socket.gcm_token);
           }
         });
@@ -447,3 +449,9 @@ function detectTopicEvent(event_type, data) {
 server.listen(port, host, function () {
   logger.info('Server listening at %s:%d', host, port);
 });
+
+// process.on('SIGINT', function() {
+//   logger.warn('Server got shutdown signal');
+//   logger.info('Cleaning redis keyspaces ...');
+//   process.exit(0);
+// });
