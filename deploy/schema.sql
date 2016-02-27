@@ -715,6 +715,13 @@ CREATE INDEX available_topics_idx ON topics USING btree (id) WHERE (archived = f
 
 
 --
+-- Name: messages_attrs_robot_message_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX messages_attrs_robot_message_idx ON messages USING gin (((attrs -> 'robot_message'::text)));
+
+
+--
 -- Name: open_topics_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
@@ -726,6 +733,13 @@ CREATE INDEX open_topics_idx ON topics USING btree (id) WHERE (closed = false);
 --
 
 CREATE INDEX users_phone_number_idx ON users USING btree (phone_number);
+
+
+--
+-- Name: users_roles_admin_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX users_roles_admin_idx ON users USING gin (((roles -> 'admin'::text)));
 
 
 --
