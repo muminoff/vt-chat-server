@@ -708,45 +708,45 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: active_announcements; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: available_topics_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX active_announcements ON announcements USING btree (id) WHERE (archived IS NOT TRUE);
-
-
---
--- Name: topics_id_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
---
-
-CREATE INDEX topics_id_idx ON topics USING btree (id) WHERE (archived IS NOT TRUE);
+CREATE INDEX available_topics_idx ON topics USING btree (id) WHERE (archived = false);
 
 
 --
--- Name: topics_id_idx1; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: messages_attrs_robot_message_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX topics_id_idx1 ON topics USING btree (id) WHERE (closed IS NOT TRUE);
-
-
---
--- Name: users_device_type_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
---
-
-CREATE INDEX users_device_type_idx ON users USING btree (device_type);
+CREATE INDEX messages_attrs_robot_message_idx ON messages USING gin (((attrs -> 'robot_message'::text)));
 
 
 --
--- Name: users_expr_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: open_topics_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX users_expr_idx ON users USING btree (((roles ->> 'admin'::text)));
+CREATE INDEX open_topics_idx ON topics USING btree (id) WHERE (closed = false);
 
 
 --
--- Name: users_expr_idx1; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+-- Name: users_phone_number_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
 --
 
-CREATE INDEX users_expr_idx1 ON users USING btree (((vt ->> 'sticker'::text)));
+CREATE INDEX users_phone_number_idx ON users USING btree (phone_number);
+
+
+--
+-- Name: users_roles_admin_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX users_roles_admin_idx ON users USING gin (((roles -> 'admin'::text)));
+
+
+--
+-- Name: users_username_idx; Type: INDEX; Schema: public; Owner: vt; Tablespace: 
+--
+
+CREATE INDEX users_username_idx ON users USING btree (username);
 
 
 --
@@ -827,10 +827,10 @@ CREATE TRIGGER trig_topic_update_notify BEFORE UPDATE ON topics FOR EACH ROW EXE
 
 
 --
--- Name: update_modified_column_trigger; Type: TRIGGER; Schema: public; Owner: vt
+-- Name: trig_update_modified_column; Type: TRIGGER; Schema: public; Owner: vt
 --
 
-CREATE TRIGGER update_modified_column_trigger BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+CREATE TRIGGER trig_update_modified_column BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 
 --
