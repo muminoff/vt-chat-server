@@ -7,11 +7,6 @@ var io = require('socket.io')(server);
 var pg = require('pg');
 var redis = require('redis');
 
-// turn on the radar to catch errors
-var raven = require('raven');
-var radar = new raven.Client('http://a1a4f603b98f4313a25de7b016167a13:c5051fd9d959468892ea03bb0c724f66@sentry.drivers.uz/2');
-radar.patchGlobal();
-
 // async, raging ocean waves
 var async = require('async');
 
