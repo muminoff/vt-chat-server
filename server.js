@@ -109,12 +109,21 @@ io.sockets.on('connection', function (socket) {
           logger.info('User ' + socket.user_id + ' authenticated');
           logger.info('User roles ->', socket.roles);
           socket.emit('signin_response', { status: 'ok', roles: user.roles });
-          online_sockets.push(socket);
+
+          socketIndex = online_sockets.indexOf(socket);
+          logger.debug('Socket index ->', socketIndex);
+
+          if(socketIndex === -1) {
+            logger.debug('Socket is connecting first time');
+            online_sockets.push(socket);
+          } else {
+            logger.debug('Socket is connecting more than one time, so ignoring...');
+          }
 
           logger.debug('Getting subscribed topics of user', socket.username, '...');
 
           userTopics(client, socket.user_id, logger, function(topics) {
-            logger.info('Got topics from API', topics);
+            // logger.info('Got topics from API', topics);
             for (var i = 0; i < topics.length; i++) {
               
               // get topic id
@@ -225,6 +234,7 @@ io.sockets.on('connection', function (socket) {
         done();
         logger.debug('Got msg from API', msg);
         logger.debug('Broadcasting message through topic', topic_id);
+        showChannelSubscribers('topic' + topic_id);
         io.sockets.in('topic' + topic_id).emit('message_events', msg);
       });
 
@@ -438,6 +448,19 @@ function detectTopicEvent(event_type, data) {
     default:
       logger.warn('Other event fired in DB');
   }
+}
+
+var showChannelSubscribers = function(topic_id) {
+  var clients = io.sockets.adapter.rooms[topic_id];
+  logger.debug("Clients -->", clients);
+  // for (var clientId in clients) {
+  // for (var i = 0; i < clients.length; i++) {
+  //   logger.debug("->", io.sockets.connected[i]);
+  // }
+  clients.forEach(function(s) {
+    var username = io.of(topic_id).sockets[s].username;
+    logger.debug('->', username);
+  });
 }
 
 // listen on given host and port
