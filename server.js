@@ -115,6 +115,7 @@ io.sockets.on('connection', function (socket) {
 
           if(socketIndex === -1) {
             logger.debug('Socket is connecting first time');
+            logger.debug('Socket id', socket.id, 'username', socket.username);
             online_sockets.push(socket);
           } else {
             logger.debug('Socket is connecting more than one time, so ignoring...');
@@ -169,7 +170,7 @@ io.sockets.on('connection', function (socket) {
       logger.debug('Getting subscribed topics of user', socket.username, '...');
       socket.disconnect();
     }
-  }, 3000);
+  }, 60000);
 
   // topic message api
   socket.on('message_events', function(data) {
@@ -452,15 +453,15 @@ function detectTopicEvent(event_type, data) {
 
 var showChannelSubscribers = function(topic_id) {
   var clients = io.sockets.adapter.rooms[topic_id];
-  logger.debug("Clients -->", clients);
+  logger.debug("Clients -->", clients, typeof(clients));
   // for (var clientId in clients) {
   // for (var i = 0; i < clients.length; i++) {
   //   logger.debug("->", io.sockets.connected[i]);
   // }
-  clients.forEach(function(s) {
-    var username = io.of(topic_id).sockets[s].username;
-    logger.debug('->', username);
-  });
+  // clients.forEach(function(s) {
+  //   var username = io.of(topic_id).sockets[s].username;
+  //   logger.debug('->', username);
+  // });
 }
 
 // listen on given host and port
