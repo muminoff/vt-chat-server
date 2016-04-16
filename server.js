@@ -113,6 +113,7 @@ io.sockets.on('connection', function (socket) {
 	  if(typeof(user.roles.banned) !== 'undefined') {
             socket.emit('signin_response', { status: 'fail', data: 'banned' });
             socket.disconnect();
+            return;
           } else {
             socket.emit('signin_response', { status: 'ok', roles: user.roles });
           }
