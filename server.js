@@ -110,7 +110,7 @@ io.sockets.on('connection', function (socket) {
           logger.info('User roles ->', socket.roles);
 
           // check whether user is banned or not
-	  if(typeof(user.roles.banned) !== 'undefined') {
+	  if((user.roles !== null ) && (user.roles.banned === true)) {
             socket.emit('signin_response', { status: 'fail', data: 'banned' });
             socket.disconnect();
             return;
