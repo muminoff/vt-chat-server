@@ -108,7 +108,14 @@ io.sockets.on('connection', function (socket) {
 
           logger.info('User ' + socket.user_id + ' authenticated');
           logger.info('User roles ->', socket.roles);
-          socket.emit('signin_response', { status: 'ok', roles: user.roles });
+
+          // check whether user is banned or not
+	  if(typeof(user.roles.banned) !== 'undefined') {
+            socket.emit('signin_response', { status: 'fail', data: 'banned' });
+            socket.disconnect();
+          } else {
+            socket.emit('signin_response', { status: 'ok', roles: user.roles });
+          }
 
           socketIndex = online_sockets.indexOf(socket);
           logger.debug('Socket index ->', socketIndex);
